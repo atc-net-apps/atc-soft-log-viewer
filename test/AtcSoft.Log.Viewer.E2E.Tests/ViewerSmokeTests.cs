@@ -65,11 +65,11 @@ public sealed class ViewerSmokeTests
         var item = app.TryFind(main, itemName);
         if (item is null || item.IsOffscreen)
         {
+            // The ribbon's Backstage has no name in the UI tree, only its class.
             DesktopApp.Press(app.FindWhere(
                 main,
-                e => string.Equals(e.Properties.Name.ValueOrDefault, "Application", StringComparison.Ordinal) &&
-                     e.Properties.ControlType.ValueOrDefault is ControlType.Button or ControlType.TabItem or ControlType.MenuItem,
-                "named 'Application' (the backstage button)"));
+                e => string.Equals(e.Properties.ClassName.ValueOrDefault, "Backstage", StringComparison.Ordinal),
+                "of the class Backstage (the Application menu)"));
 
             item = app.FindWhere(
                 main,

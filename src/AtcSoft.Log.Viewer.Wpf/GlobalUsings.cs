@@ -1,3 +1,4 @@
+global using System.Collections.Specialized;
 global using System.ComponentModel;
 global using System.Diagnostics.CodeAnalysis;
 global using System.Globalization;
@@ -10,6 +11,7 @@ global using System.Windows.Data;
 global using System.Windows.Input;
 global using System.Windows.Media;
 global using System.Windows.Media.Imaging;
+global using System.Windows.Threading;
 
 global using Atc;
 global using Atc.Helpers;
@@ -53,5 +55,6 @@ global using LiveChartsCore.SkiaSharpView.VisualElements;
 global using Microsoft.Extensions.Logging;
 global using Microsoft.Extensions.Options;
 global using Microsoft.Win32;
+global using Microsoft.Xaml.Behaviors;
 
 global using SkiaSharp;

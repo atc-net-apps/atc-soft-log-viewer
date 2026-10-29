@@ -100,6 +100,60 @@ public sealed class LiveFolderTests
     }
 
     [Fact]
+    public async Task Window_Keeps_Answering_At_5000_Entries_A_Second()
+    {
+        E2ESettings.SkipUnlessEnabled();
+
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var folder = E2ESettings.NewFolder("rate-logs");
+        using var simulator = CreateSimulator(folder);
+        simulator.Burst(1_000);
+
+        using var run = new ViewerRun("rate", folder);
+        run.WaitForCount(ViewerRun.CollectedCountId, 1_000, CountTimeout);
+
+        // How long a read takes while nothing arrives, to compare with
+        var idle = new List<TimeSpan>();
+        for (var i = 0; i < 10; i++)
+        {
+            var idleWatch = Stopwatch.StartNew();
+            run.ReadCount(ViewerRun.CollectedCountId);
+            idle.Add(idleWatch.Elapsed);
+            await Task.Delay(100, cancellationToken);
+        }
+
+        idle.Sort();
+
+        // A steady flow arrives as many small batches, each one added to the list on the UI thread
+        simulator.UpdateSettings(new SimulatorSettings(Format: LogFormat.Serilog, LinesPerSecond: 5_000, FileCount: 4, RollMode: RollMode.Rename));
+        simulator.Start();
+        var times = new List<TimeSpan>();
+        var end = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        while (DateTime.UtcNow < end)
+        {
+            var watch = Stopwatch.StartNew();
+            run.ReadCount(ViewerRun.CollectedCountId);
+            times.Add(watch.Elapsed);
+            await Task.Delay(100, cancellationToken);
+        }
+
+        simulator.Stop();
+        var written = simulator.GetState().EntriesWritten;
+        var count = run.WaitForCount(ViewerRun.CollectedCountId, written, CountTimeout);
+
+        times.Sort();
+        var median = times[times.Count / 2];
+        var slowest = times[^1];
+        TestContext.Current.TestOutputHelper?.WriteLine(
+            $"{written - 1_000:N0} entries in 10 s: {times.Count} reads of the status bar, median {median.TotalMilliseconds:N0} ms, slowest {slowest.TotalMilliseconds:N0} ms " +
+            $"(idle: median {idle[idle.Count / 2].TotalMilliseconds:N0} ms); count {count:N0}.");
+
+        count.Should().Be(written, "every entry written is counted once");
+        slowest.Should().BeLessThan(TimeSpan.FromSeconds(2), "the window must keep answering while entries arrive");
+        run.App.ShouldNotHaveCrashed();
+    }
+
+    [Fact]
     public void Empty_Folder_Shows_A_Message_Not_A_Crash()
     {
         E2ESettings.SkipUnlessEnabled();

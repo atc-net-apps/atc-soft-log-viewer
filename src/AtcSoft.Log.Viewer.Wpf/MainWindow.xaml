@@ -6,7 +6,7 @@
     xmlns:atc="https://github.com/atc-net/atc-wpf/tree/main/schemas"
     xmlns:atcValueConverters="https://github.com/atc-net/atc-wpf/tree/main/schemas/value-converters"
     xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
-    xmlns:behaviors="clr-namespace:Atc.Wpf.Behaviors;assembly=Atc.Wpf"
+    xmlns:appBehaviors="clr-namespace:AtcSoft.Log.Viewer.Wpf.Behaviors"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:fluent="urn:fluent-ribbon"
     xmlns:fontIcons="clr-namespace:Atc.Wpf.FontIcons;assembly=Atc.Wpf.FontIcons"
@@ -287,7 +287,7 @@
                                 SelectedItem="{Binding Path=SelectedLogEntry}"
                                 SelectionMode="Single">
                                 <b:Interaction.Behaviors>
-                                    <behaviors:AutoScrollListViewBehavior IsEnabled="{Binding Path=EnableAutoScrollToEnd}" ScrollDirection="Bottom" />
+                                    <appBehaviors:AutoScrollToEndBehavior IsEnabled="{Binding Path=EnableAutoScrollToEnd}" />
                                 </b:Interaction.Behaviors>
                                 <ListView.View>
                                     <GridView>
