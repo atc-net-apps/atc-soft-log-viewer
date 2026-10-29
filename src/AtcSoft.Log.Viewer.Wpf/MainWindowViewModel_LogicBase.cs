@@ -176,6 +176,8 @@ public partial class MainWindowViewModel
             return;
         }
 
+        ProfileViewModel.CollectorType = logFileCollectorType;
+
         logAnalyzer.StopMonitoringAndClearLogEntries();
         await ApplyFilter()
             .ConfigureAwait(continueOnCapturedContext: false);
