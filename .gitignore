@@ -435,3 +435,6 @@ TestResults/
 
 # Test data log files are part of the tests
 !test/**/TestData/*.log
+
+# Big sample log files made by tool/Atc.LogFiles.SampleGenerator
+sample/*.log
