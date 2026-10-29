@@ -9,51 +9,17 @@ namespace AtcSoft.Log.Viewer.Wpf;
 public partial class MainWindowViewModel
 {
     private void LoadRecentOpenFiles()
-    {
-        var recentOpenFileViewModels = RecentOpenFileHelper.Load(WpfApp.DataPaths.Root);
-
-        RecentOpenFiles.Clear();
-        RecentOpenFiles.SuppressOnChangedNotification = true;
-        RecentOpenFiles.AddRange(recentOpenFileViewModels);
-        RecentOpenFiles.SuppressOnChangedNotification = false;
-    }
+        => ShowRecentOpenFiles(RecentFilesFile.Load(WpfApp.DataPaths.RecentOpenFilesFile));
 
     private void AddLoadedProfileFileToRecentOpenFiles(FileInfo file)
+        => ShowRecentOpenFiles(RecentFilesFile.Add(WpfApp.DataPaths.RecentOpenFilesFile, file.FullName, DateTime.Now));
+
+    private void ShowRecentOpenFiles(IReadOnlyList<RecentFile> recentFiles)
     {
-        RecentOpenFiles.Add(new RecentOpenFileViewModel(WpfApp.DataPaths.Root, DateTime.Now, file.FullName));
-
-        var recentOpenFilesOption = new RecentOpenFilesOption();
-        foreach (var vm in RecentOpenFiles.OrderByDescending(x => x.TimeStamp))
-        {
-            var item = new RecentOpenFileOption
-            {
-                TimeStamp = vm.TimeStamp,
-                FilePath = vm.File,
-            };
-
-            if (recentOpenFilesOption.RecentOpenFiles.FirstOrDefault(x => x.FilePath == item.FilePath) is not null)
-            {
-                continue;
-            }
-
-            if (!File.Exists(item.FilePath))
-            {
-                continue;
-            }
-
-            recentOpenFilesOption.RecentOpenFiles.Add(item);
-        }
-
-        var recentOpenFilesFilePath = Path.Combine(WpfApp.DataPaths.Root.FullName, AtcFileNameConstants.RecentOpenFilesFileName);
-        if (!Directory.Exists(WpfApp.DataPaths.ProfilesDirectory.FullName))
-        {
-            Directory.CreateDirectory(WpfApp.DataPaths.Root.FullName);
-        }
-
-        var json = JsonSerializer.Serialize(recentOpenFilesOption, WpfApp.JsonSerializerOptions);
-        File.WriteAllText(recentOpenFilesFilePath, json);
-
-        LoadRecentOpenFiles();
+        RecentOpenFiles.Clear();
+        RecentOpenFiles.SuppressOnChangedNotification = true;
+        RecentOpenFiles.AddRange(recentFiles.Select(x => new RecentOpenFileViewModel(WpfApp.DataPaths.Root, x.TimeStamp, x.FilePath)));
+        RecentOpenFiles.SuppressOnChangedNotification = false;
     }
 
     private async Task LoadProfileFile(

@@ -6,6 +6,7 @@
     xmlns:atc="https://github.com/atc-net/atc-wpf/tree/main/schemas"
     xmlns:atcValueConverters="https://github.com/atc-net/atc-wpf/tree/main/schemas/value-converters"
     xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:core="clr-namespace:AtcSoft.Log.Viewer;assembly=AtcSoft.Log.Viewer"
     xmlns:appBehaviors="clr-namespace:AtcSoft.Log.Viewer.Wpf.Behaviors"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:fluent="urn:fluent-ribbon"
@@ -247,7 +248,7 @@
                         <fluent:RibbonGroupBox Header="List">
                             <fluent:Button
                                 Command="{Binding Path=ChangeViewModeCommand}"
-                                CommandParameter="{x:Static app:ViewMode.ListView}"
+                                CommandParameter="{x:Static core:ViewMode.ListView}"
                                 Header="List View"
                                 Icon="{Binding Source={x:Static fontIcons:IcoFontType.List}, Converter={StaticResource FontIconImageConverter}, ConverterParameter={StaticResource AtcApps.Brushes.Bootstrap.Blue500}}"
                                 Style="{StaticResource ButtonStyle}" />
@@ -255,13 +256,13 @@
                         <fluent:RibbonGroupBox Header="Charts">
                             <fluent:Button
                                 Command="{Binding Path=ChangeViewModeCommand}"
-                                CommandParameter="{x:Static app:ViewMode.ChartLogLevelPie}"
+                                CommandParameter="{x:Static core:ViewMode.ChartLogLevelPie}"
                                 Header="Log Level Distribution"
                                 Icon="{Binding Source={x:Static fontIcons:FontAwesomeSolidType.ChartPie}, Converter={StaticResource FontIconImageConverter}, ConverterParameter={StaticResource AtcApps.Brushes.Bootstrap.Blue500}}"
                                 Style="{StaticResource ButtonStyle}" />
                             <fluent:Button
                                 Command="{Binding Path=ChangeViewModeCommand}"
-                                CommandParameter="{x:Static app:ViewMode.ChartTimeline}"
+                                CommandParameter="{x:Static core:ViewMode.ChartTimeline}"
                                 Header="Timeline Distribution"
                                 Icon="{Binding Source={x:Static fontIcons:FontAwesomeSolidType.ChartBar}, Converter={StaticResource FontIconImageConverter}, ConverterParameter={StaticResource AtcApps.Brushes.Bootstrap.Blue500}}"
                                 Style="{StaticResource ButtonStyle}" />
@@ -276,7 +277,7 @@
                         <atc:GridEx
                             Columns="*"
                             Rows="4*,5,1*"
-                            Visibility="{Binding Path=ViewMode, ConverterParameter={x:Static app:ViewMode.ListView}, Converter={StaticResource ViewModeVisibilityConverter}, FallbackValue=Collapsed}">
+                            Visibility="{Binding Path=ViewMode, ConverterParameter={x:Static core:ViewMode.ListView}, Converter={StaticResource ViewModeVisibilityConverter}, FallbackValue=Collapsed}">
                             <ListView
                                 Grid.Row="0"
                                 AutomationProperties.AutomationId="LogEntries"
@@ -353,7 +354,7 @@
                         <atc:GridEx
                             Columns="*"
                             Rows="*"
-                            Visibility="{Binding Path=ViewMode, ConverterParameter={x:Static app:ViewMode.ChartLogLevelPie}, Converter={StaticResource ViewModeVisibilityConverter}, FallbackValue=Visible}">
+                            Visibility="{Binding Path=ViewMode, ConverterParameter={x:Static core:ViewMode.ChartLogLevelPie}, Converter={StaticResource ViewModeVisibilityConverter}, FallbackValue=Visible}">
                             <atc:GridEx Columns="*,10,*" Rows="*">
                                 <wpf:PieChart
                                     Title="{Binding Path=ChartLogLevelPieViewModel.FilteredTitle}"
@@ -369,7 +370,7 @@
                         <atc:GridEx
                             Columns="*"
                             Rows="*"
-                            Visibility="{Binding Path=ViewMode, ConverterParameter={x:Static app:ViewMode.ChartTimeline}, Converter={StaticResource ViewModeVisibilityConverter}, FallbackValue=Visible}">
+                            Visibility="{Binding Path=ViewMode, ConverterParameter={x:Static core:ViewMode.ChartTimeline}, Converter={StaticResource ViewModeVisibilityConverter}, FallbackValue=Visible}">
                             <atc:GridEx Columns="*,220" Rows="*">
                                 <wpf:CartesianChart
                                     Title="{Binding Path=ChartTimelineViewModel.Title}"

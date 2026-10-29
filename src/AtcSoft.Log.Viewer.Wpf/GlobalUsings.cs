@@ -21,9 +21,7 @@ global using Atc.Serialization;
 global using Atc.Wpf.Collections;
 global using Atc.Wpf.Components.Dialogs;
 global using Atc.Wpf.Components.Settings;
-global using Atc.Wpf.Controls.Helpers;
 global using Atc.Wpf.Controls.ViewModels;
-global using Atc.Wpf.Data;
 global using Atc.Wpf.Forms;
 global using Atc.Wpf.Forms.Abstractions;
 global using Atc.Wpf.Forms.Dialogs;
@@ -37,6 +35,7 @@ global using Atc.XamlToolkit.Messaging;
 global using Atc.XamlToolkit.Mvvm;
 
 global using AtcSoft.Log.Viewer.Profiles;
+global using AtcSoft.Log.Viewer.RecentFiles;
 global using AtcSoft.Log.Viewer.Timeline;
 global using AtcSoft.Log.Viewer.Wpf.Dialogs;
 global using AtcSoft.Log.Viewer.Wpf.Extensions;
