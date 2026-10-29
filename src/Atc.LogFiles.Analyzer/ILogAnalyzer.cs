@@ -5,7 +5,7 @@ public interface ILogAnalyzer
     /// <summary>
     /// Raised with entries that match the filter: once when a collect is done, and in batches for live entries.
     /// </summary>
-    event Action<LogEntryBatch>? CollectedEntries;
+    event EventHandler<LogEntryBatchEventArgs>? CollectedEntries;
 
     LogFileCollectorType DetermineCollectorType(DirectoryInfo directory);
 

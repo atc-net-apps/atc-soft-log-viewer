@@ -51,7 +51,7 @@ public class TailFile : IDisposable
         pollTimer = new Timer(_ => RequestRead());
     }
 
-    public event Action<TailLine>? LineAdded;
+    public event EventHandler<TailLineEventArgs>? LineAdded;
 
     public void Start()
     {
@@ -254,7 +254,7 @@ public class TailFile : IDisposable
 
         if (line.Length > 0)
         {
-            LineAdded?.Invoke(new TailLine(file, numberOfLines, line));
+            LineAdded?.Invoke(this, new TailLineEventArgs(new TailLine(file, numberOfLines, line)));
         }
     }
 

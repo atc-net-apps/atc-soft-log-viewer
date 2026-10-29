@@ -188,7 +188,7 @@ public sealed class LogAnalyzerTests : IDisposable
     {
         // Arrange
         var raised = new ConcurrentQueue<AtcLogEntry>();
-        sut.CollectedEntries += batch => batch.Entries.ToList().ForEach(raised.Enqueue);
+        sut.CollectedEntries += (_, e) => e.Batch.Entries.ToList().ForEach(raised.Enqueue);
         sut.SetFilter(CreateFilter() with { LogLevelTrace = false });
 
         // Act
@@ -206,10 +206,10 @@ public sealed class LogAnalyzerTests : IDisposable
         // Arrange
         var notifications = 0;
         var delivered = 0;
-        sut.CollectedEntries += batch =>
+        sut.CollectedEntries += (_, e) =>
         {
             Interlocked.Increment(ref notifications);
-            Interlocked.Add(ref delivered, batch.Entries.Count);
+            Interlocked.Add(ref delivered, e.Batch.Entries.Count);
         };
 
         // Act
@@ -230,7 +230,7 @@ public sealed class LogAnalyzerTests : IDisposable
         const int threadCount = 8;
         const int entriesPerThread = 5_000;
         var delivered = 0;
-        sut.CollectedEntries += batch => Interlocked.Add(ref delivered, batch.Entries.Count);
+        sut.CollectedEntries += (_, e) => Interlocked.Add(ref delivered, e.Batch.Entries.Count);
 
         // Act
         await Task.WhenAll(
@@ -268,11 +268,27 @@ public sealed class LogAnalyzerTests : IDisposable
     }
 
     [Fact]
+    public async Task CollectedEntries_IsRaisedWithTheAnalyzerAsSender()
+    {
+        // Arrange
+        var senders = new ConcurrentQueue<object?>();
+        sut.CollectedEntries += (sender, _) => senders.Enqueue(sender);
+
+        // Act
+        RaiseDefaultEntries();
+        await Task.Delay(400, CancellationToken);
+
+        // Assert
+        senders.Should().NotBeEmpty();
+        senders.Should().AllSatisfy(x => x.Should().BeSameAs(sut));
+    }
+
+    [Fact]
     public async Task ApplyFilter_DoesNotDeliverEntriesThatAreInItsResultAgain()
     {
         // Arrange
         var batches = new ConcurrentQueue<LogEntryBatch>();
-        sut.CollectedEntries += batches.Enqueue;
+        sut.CollectedEntries += (_, e) => batches.Enqueue(e.Batch);
         RaiseDefaultEntries();
 
         // Act
@@ -293,7 +309,7 @@ public sealed class LogAnalyzerTests : IDisposable
     {
         // Arrange
         var batches = new ConcurrentQueue<LogEntryBatch>();
-        sut.CollectedEntries += batches.Enqueue;
+        sut.CollectedEntries += (_, e) => batches.Enqueue(e.Batch);
         var applied = sut.ApplyFilter(CreateFilter() with { LogLevelTrace = false });
 
         // Act
@@ -381,7 +397,7 @@ public sealed class LogAnalyzerTests : IDisposable
     }
 
     private void RaiseEntry(AtcLogEntry entry)
-        => serilogFileCollector.CollectedEntry += Raise.Event<Action<AtcLogEntry>>(entry);
+        => serilogFileCollector.CollectedEntry += Raise.EventWith(serilogFileCollector, new LogEntryEventArgs(entry));
 
     private void RaiseDefaultEntries()
     {

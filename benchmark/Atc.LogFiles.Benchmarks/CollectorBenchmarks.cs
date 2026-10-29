@@ -19,7 +19,7 @@ public class CollectorBenchmarks
     {
         file = SampleLogFactory.CreateSerilogFile(EntryCount);
         collector = new SerilogFileCollector(new SerilogFileExtractor());
-        collector.CollectedEntry += _ => collected++;
+        collector.CollectedEntry += (_, _) => collected++;
     }
 
     [GlobalCleanup]

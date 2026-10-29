@@ -353,8 +353,10 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
         });
     }
 
-    private void OnCollectedEntries(LogEntryBatch batch)
-        => Application.Current?.Dispatcher.BeginInvoke(() => AddBatch(batch));
+    private void OnCollectedEntries(
+        object? sender,
+        LogEntryBatchEventArgs e)
+        => Application.Current?.Dispatcher.BeginInvoke(() => AddBatch(e.Batch));
 
     /// <summary>
     /// Adds a batch from the analyzer. Runs on the UI thread.

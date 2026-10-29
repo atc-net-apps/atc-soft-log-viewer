@@ -2,11 +2,11 @@ namespace Atc.LogFiles.Collector;
 
 public interface IFileCollector
 {
-    event Action<AtcLogEntry>? CollectedEntry;
+    event EventHandler<LogEntryEventArgs>? CollectedEntry;
 
-    public event Action<FileInfo>? CollectedFileDone;
+    event EventHandler<FileEventArgs>? CollectedFileDone;
 
-    public event Action<FileInfo[]>? CollectedFilesDone;
+    event EventHandler<FilesEventArgs>? CollectedFilesDone;
 
     bool CanParseFileFormat(FileInfo file);
 

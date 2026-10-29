@@ -63,7 +63,7 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
         this.serilogFileCollector.CollectedFilesDone += OnCollectedFilesDone;
     }
 
-    public event Action<LogEntryBatch>? CollectedEntries;
+    public event EventHandler<LogEntryBatchEventArgs>? CollectedEntries;
 
     public LogFileCollectorType DetermineCollectorType(DirectoryInfo directory)
     {
@@ -321,8 +321,11 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
         fileSystemWatcher.Created += OnFileCreated;
     }
 
-    private void OnCollectedEntry(AtcLogEntry logEntry)
+    private void OnCollectedEntry(
+        object? sender,
+        LogEntryEventArgs e)
     {
+        var logEntry = e.Entry;
         lock (syncLock)
         {
             logEntries.Add(logEntry);
@@ -345,7 +348,9 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
         }
     }
 
-    private void OnCollectedFilesDone(FileInfo[] files)
+    private void OnCollectedFilesDone(
+        object? sender,
+        FilesEventArgs e)
     {
         if (Volatile.Read(ref activeCollectCount) == 0)
         {
@@ -391,6 +396,6 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
         }
 
         Array.Sort(entries, static (x, y) => x.TimeStamp.CompareTo(y.TimeStamp));
-        CollectedEntries?.Invoke(new LogEntryBatch(entries, version));
+        CollectedEntries?.Invoke(this, new LogEntryBatchEventArgs(new LogEntryBatch(entries, version)));
     }
 }

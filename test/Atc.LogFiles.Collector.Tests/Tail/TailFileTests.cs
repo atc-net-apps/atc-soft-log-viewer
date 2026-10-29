@@ -172,7 +172,7 @@ public sealed class TailFileTests : IDisposable
         Action<TailLine> onLine)
     {
         var tailFile = new TailFile(file);
-        tailFile.LineAdded += onLine;
+        tailFile.LineAdded += (_, e) => onLine(e.Line);
         tailFile.Start();
         tailFiles.Add(tailFile);
         return tailFile;

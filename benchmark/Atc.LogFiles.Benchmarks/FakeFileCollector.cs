@@ -5,19 +5,19 @@ namespace Atc.LogFiles.Benchmarks;
 /// </summary>
 internal sealed class FakeFileCollector : ILog4NetFileCollector, INLogFileCollector, ISerilogFileCollector
 {
-    public event Action<AtcLogEntry>? CollectedEntry;
+    public event EventHandler<LogEntryEventArgs>? CollectedEntry;
 
-    public event Action<FileInfo>? CollectedFileDone;
+    public event EventHandler<FileEventArgs>? CollectedFileDone;
 
-    public event Action<FileInfo[]>? CollectedFilesDone;
+    public event EventHandler<FilesEventArgs>? CollectedFilesDone;
 
     public void Raise(AtcLogEntry entry)
-        => CollectedEntry?.Invoke(entry);
+        => CollectedEntry?.Invoke(this, new LogEntryEventArgs(entry));
 
     public void RaiseFilesDone()
     {
-        CollectedFileDone?.Invoke(new FileInfo("fake.log"));
-        CollectedFilesDone?.Invoke([]);
+        CollectedFileDone?.Invoke(this, new FileEventArgs(new FileInfo("fake.log")));
+        CollectedFilesDone?.Invoke(this, new FilesEventArgs([]));
     }
 
     public bool CanParseFileFormat(FileInfo file)

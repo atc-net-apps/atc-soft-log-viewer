@@ -75,6 +75,28 @@ public sealed class MultiLineEntryTests : IDisposable
     [InlineData("serilog")]
     [InlineData("nlog")]
     [InlineData("log4net")]
+    public async Task CollectFile_RaisesEntriesWithTheCollectorAsSender(
+        string format)
+    {
+        // Arrange
+        var (collector, rootLine) = CreateCollector(format);
+        var file = new FileInfo(Path.Combine(directory.FullName, $"sender-{format}.log"));
+        await File.WriteAllLinesAsync(file.FullName, [rootLine("INFO", "Application started successfully")], CancellationToken);
+
+        var senders = new ConcurrentQueue<object?>();
+        ((IFileCollector)collector).CollectedEntry += (sender, _) => senders.Enqueue(sender);
+
+        // Act
+        await ((IFileCollector)collector).CollectFile(file, new LogFileCollectorConfiguration(), useMonitoring: false, CancellationToken);
+
+        // Assert
+        senders.Should().ContainSingle().Which.Should().BeSameAs(collector);
+    }
+
+    [Theory]
+    [InlineData("serilog")]
+    [InlineData("nlog")]
+    [InlineData("log4net")]
     public async Task Monitoring_RaisesAppendedEntryWithItsFollowingLines(
         string format)
     {
@@ -84,7 +106,7 @@ public sealed class MultiLineEntryTests : IDisposable
         await File.WriteAllLinesAsync(file.FullName, [rootLine("INFO", "Application started successfully")], CancellationToken);
 
         var entries = new ConcurrentQueue<AtcLogEntry>();
-        ((IFileCollector)collector).CollectedEntry += entries.Enqueue;
+        ((IFileCollector)collector).CollectedEntry += (_, e) => entries.Enqueue(e.Entry);
         await ((IFileCollector)collector).CollectFile(file, new LogFileCollectorConfiguration(), useMonitoring: true, CancellationToken);
         entries.Clear();
 
@@ -122,7 +144,7 @@ public sealed class MultiLineEntryTests : IDisposable
         await File.WriteAllLinesAsync(file.FullName, [rootLine("INFO", "Application started successfully")], CancellationToken);
 
         var entries = new ConcurrentQueue<AtcLogEntry>();
-        ((IFileCollector)collector).CollectedEntry += entries.Enqueue;
+        ((IFileCollector)collector).CollectedEntry += (_, e) => entries.Enqueue(e.Entry);
         await ((IFileCollector)collector).CollectFile(file, new LogFileCollectorConfiguration(), useMonitoring: true, CancellationToken);
         entries.Clear();
 
@@ -159,19 +181,19 @@ public sealed class MultiLineEntryTests : IDisposable
         if (file.Name.Contains("serilog", StringComparison.Ordinal))
         {
             var collector = new SerilogFileCollector(new SerilogFileExtractor());
-            collector.CollectedEntry += onEntry;
+            collector.CollectedEntry += (_, e) => onEntry(e.Entry);
             return collector.ReadAndParseLines(file, CancellationToken);
         }
 
         if (file.Name.Contains("nlog", StringComparison.Ordinal))
         {
             var collector = new NLogFileCollector(new NLogFileExtractor());
-            collector.CollectedEntry += onEntry;
+            collector.CollectedEntry += (_, e) => onEntry(e.Entry);
             return collector.ReadAndParseLines(file, CancellationToken);
         }
 
         var log4NetCollector = new Log4NetFileCollector(new Log4NetFileExtractor());
-        log4NetCollector.CollectedEntry += onEntry;
+        log4NetCollector.CollectedEntry += (_, e) => onEntry(e.Entry);
         return log4NetCollector.ReadAndParseLines(file, CancellationToken);
     }
 

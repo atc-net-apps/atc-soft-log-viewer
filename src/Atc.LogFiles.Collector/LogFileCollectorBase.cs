@@ -13,11 +13,11 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
 
     private readonly ConcurrentDictionary<string, MonitoredFile> monitoredFiles = new(StringComparer.Ordinal);
 
-    public event Action<AtcLogEntry>? CollectedEntry;
+    public event EventHandler<LogEntryEventArgs>? CollectedEntry;
 
-    public event Action<FileInfo>? CollectedFileDone;
+    public event EventHandler<FileEventArgs>? CollectedFileDone;
 
-    public event Action<FileInfo[]>? CollectedFilesDone;
+    public event EventHandler<FilesEventArgs>? CollectedFilesDone;
 
     /// <summary>
     /// The file extensions (without dot) this log format is written to.
@@ -87,7 +87,7 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
 
         if (collected)
         {
-            CollectedFilesDone?.Invoke([file]);
+            CollectedFilesDone?.Invoke(this, new FilesEventArgs([file]));
         }
     }
 
@@ -123,7 +123,7 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
                 })
             .ConfigureAwait(continueOnCapturedContext: false);
 
-        CollectedFilesDone?.Invoke([.. files]);
+        CollectedFilesDone?.Invoke(this, new FilesEventArgs([.. files]));
     }
 
     public void MonitorFileIfNeeded(
@@ -141,7 +141,7 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
         var monitoredFile = new MonitoredFile(
             fileInfo,
             lastLineNumber,
-            CreateAssembler(fileInfo, entry => CollectedEntry?.Invoke(entry)));
+            CreateAssembler(fileInfo, entry => CollectedEntry?.Invoke(this, new LogEntryEventArgs(entry))));
 
         if (monitoredFiles.TryAdd(fileInfo.FullName, monitoredFile))
         {
@@ -197,7 +197,7 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
             entry =>
             {
                 hasAnyEntries = true;
-                CollectedEntry?.Invoke(entry);
+                CollectedEntry?.Invoke(this, new LogEntryEventArgs(entry));
             });
 
         long lineNumber = 0;
@@ -297,7 +297,7 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
             return false;
         }
 
-        CollectedFileDone?.Invoke(file);
+        CollectedFileDone?.Invoke(this, new FileEventArgs(file));
 
         if (useMonitoring)
         {
@@ -350,8 +350,11 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
             flushTimer.Dispose();
         }
 
-        private void OnLineAdded(TailLine tailLine)
+        private void OnLineAdded(
+            object? sender,
+            TailLineEventArgs e)
         {
+            var tailLine = e.Line;
             lock (syncLock)
             {
                 assembler.AddLine(tailLine.LineNumber, tailLine.Line);

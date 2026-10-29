@@ -36,7 +36,7 @@ public sealed class SampleLogGeneratorTests : IDisposable
         var options = CreateOptions(format);
         var collector = CreateCollector(format);
         var entries = new List<AtcLogEntry>();
-        collector.CollectedEntry += entries.Add;
+        collector.CollectedEntry += (_, e) => entries.Add(e.Entry);
 
         // Act
         var result = SampleLogGenerator.Generate(options);
