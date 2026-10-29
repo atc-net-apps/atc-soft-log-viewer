@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The WPF front end: views and view models. The exe (AtcSoft.Log.Viewer.Wpf.App) hosts it. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\AppIcon.ico" />
+    <Resource Include="Resources\AppIcon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Atc" Version="4.0.0" />
+    <PackageReference Include="Atc.Wpf" Version="4.2.1" />
+    <PackageReference Include="Atc.Wpf.Components" Version="4.2.1" />
+    <PackageReference Include="Atc.Wpf.Controls" Version="4.2.1" />
+    <PackageReference Include="Atc.Wpf.FontIcons" Version="4.2.1" />
+    <PackageReference Include="Atc.Wpf.Forms" Version="4.2.1" />
+    <PackageReference Include="Atc.Wpf.Theming" Version="4.2.1" />
+    <PackageReference Include="Fluent.Ribbon" Version="11.0.2" />
+    <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.14" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AtcSoft.Log.Viewer\AtcSoft.Log.Viewer.csproj" />
+  </ItemGroup>
+
+  <!-- See "Log libraries" in Directory.Build.props -->
+  <ItemGroup Condition="'$(UseLogLibraryProjects)' == 'true'">
+    <ProjectReference Include="$(LogLibrariesRoot)src\Atc.LogAnalyzer\Atc.LogAnalyzer.csproj" AdditionalProperties="ShouldUnsetParentConfigurationAndPlatform=false" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseLogLibraryProjects)' != 'true'">
+    <PackageReference Include="Atc.LogAnalyzer" Version="$(LogLibrariesVersion)" />
+  </ItemGroup>
+
+</Project>

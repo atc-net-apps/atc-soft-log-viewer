@@ -186,6 +186,7 @@ dotnet run --project src/AtcSoft.Log.Viewer.Wpf.App -c Release
 
 | Project | What |
 |---|---|
-| `src/AtcSoft.Log.Viewer` | App core without UI: data paths and the migration of earlier data |
-| `src/AtcSoft.Log.Viewer.Wpf.App` | The WPF app |
+| `src/AtcSoft.Log.Viewer` | App core without UI: data paths, the migration of earlier data, the profile format and timeline modes |
+| `src/AtcSoft.Log.Viewer.Wpf` | The WPF front end: views and view models |
+| `src/AtcSoft.Log.Viewer.Wpf.App` | The exe: starts the app and shows the main window |
 | `test/AtcSoft.Log.Viewer.Tests` | Tests for the core |

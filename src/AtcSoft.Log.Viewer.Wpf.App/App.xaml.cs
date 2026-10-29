@@ -10,25 +10,6 @@ public partial class App
     private readonly IHost host;
     private IConfiguration? configuration;
 
-    [SuppressMessage("Minor Code Smell", "S1075:URIs should not be hardcoded", Justification = "OK.")]
-    public static readonly BitmapImage DefaultIcon = new(new Uri("pack://application:,,,/Resources/AppIcon.ico", UriKind.Absolute));
-
-    /// <summary>
-    /// Gets the per-user data folder: profiles, recent files and custom application settings.
-    /// </summary>
-    public static AppDataPaths DataPaths { get; } = AppDataPaths.ForCurrentUser();
-
-    public static JsonSerializerOptions JsonSerializerOptions
-    {
-        get
-        {
-            var jsonSerializerOptions = JsonSerializerOptionsFactory.Create();
-            jsonSerializerOptions.PropertyNamingPolicy = null;
-            jsonSerializerOptions.Converters.Add(new SolidColorBrushToHexJsonConverter());
-            return jsonSerializerOptions;
-        }
-    }
-
     /// <summary>
     /// Initializes a new instance of the <see cref="App"/> class.
     /// </summary>
@@ -215,8 +196,8 @@ public partial class App
         Exception? error = null;
         try
         {
-            LegacyDataMigrator.CopyIfNeeded(AppDataPaths.LegacyRoot, DataPaths.Root);
-            DataPaths.EnsureCreated();
+            LegacyDataMigrator.CopyIfNeeded(AppDataPaths.LegacyRoot, WpfApp.DataPaths.Root);
+            WpfApp.DataPaths.EnsureCreated();
         }
         catch (IOException ex)
         {
@@ -233,7 +214,7 @@ public partial class App
     private static void RestoreInstallerCustomAppSettingsIfNeeded()
     {
         var currentFile = new FileInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, AtcFileNameConstants.AppSettingsCustom));
-        var backupFile = DataPaths.CustomAppSettingsFile;
+        var backupFile = WpfApp.DataPaths.CustomAppSettingsFile;
         if (!currentFile.Exists ||
             !backupFile.Exists ||
             currentFile.LastWriteTime == backupFile.LastWriteTime)
