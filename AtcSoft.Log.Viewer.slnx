@@ -29,6 +29,7 @@
     <Project Path="test/Atc.LogFiles.Collector.Tests/Atc.LogFiles.Collector.Tests.csproj" />
     <Project Path="test/Atc.LogFiles.SampleGenerator.Tests/Atc.LogFiles.SampleGenerator.Tests.csproj" />
     <Project Path="test/Atc.LogFiles.Simulator.Tests/Atc.LogFiles.Simulator.Tests.csproj" />
+    <Project Path="test/AtcSoft.Log.Viewer.E2E.Tests/AtcSoft.Log.Viewer.E2E.Tests.csproj" />
     <Project Path="test/AtcSoft.Log.Viewer.Tests/AtcSoft.Log.Viewer.Tests.csproj" />
   </Folder>
   <Folder Name="/tool/">

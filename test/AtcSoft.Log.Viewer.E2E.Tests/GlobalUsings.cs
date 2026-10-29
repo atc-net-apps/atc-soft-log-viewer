@@ -1,0 +1,16 @@
+global using System.Diagnostics;
+global using System.Globalization;
+global using System.Text;
+global using Aspire.Hosting;
+global using Aspire.Hosting.ApplicationModel;
+global using Aspire.Hosting.Testing;
+global using Atc.LogFiles.Collector;
+global using Atc.LogFiles.Simulator;
+global using AtcSoft.Log.Viewer.E2E.Infrastructure;
+global using AtcSoft.Log.Viewer.Profiles;
+global using FlaUI.Core.AutomationElements;
+global using FlaUI.Core.Conditions;
+global using FlaUI.Core.Definitions;
+global using FlaUI.UIA3;
+global using Microsoft.Extensions.Options;
+global using Microsoft.Playwright;

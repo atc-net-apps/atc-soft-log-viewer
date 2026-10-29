@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    End-to-end UI tests: they start ATC Log Viewer and the sample AppHost (Aspire), drive the
+    viewer through UI Automation (FlaUI) and the simulator page in Edge (Playwright), and fail
+    on a crash dialog, a step that breaks or entries that never show. They open windows, so
+    they skip unless ATCSOFT_E2E=1 (CI runs every test project). See docs/e2e-tests.md.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <RootNamespace>AtcSoft.Log.Viewer.E2E</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Writes the log files the viewer reads, in-process. -->
+    <ProjectReference Include="..\..\sample\Atc.LogFiles.Simulator\Atc.LogFiles.Simulator.csproj" />
+    <!-- Started with Aspire.Hosting.Testing. -->
+    <ProjectReference Include="..\..\sample\AtcSoft.Log.Viewer.Sample.AppHost\AtcSoft.Log.Viewer.Sample.AppHost.csproj" />
+    <!-- Writes the profile the viewer opens at start. -->
+    <ProjectReference Include="..\..\src\AtcSoft.Log.Viewer\AtcSoft.Log.Viewer.csproj" />
+    <!-- Built before the tests run; the tests start its executable. -->
+    <ProjectReference Include="..\..\src\AtcSoft.Log.Viewer.Wpf.App\AtcSoft.Log.Viewer.Wpf.App.csproj" ReferenceOutputAssembly="false" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.Testing" Version="13.6.4" />
+    <PackageReference Include="FlaUI.UIA3" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Playwright" Version="1.63.0" />
+  </ItemGroup>
+
+</Project>
