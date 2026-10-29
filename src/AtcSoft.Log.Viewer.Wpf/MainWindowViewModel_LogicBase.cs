@@ -85,7 +85,7 @@ public partial class MainWindowViewModel
         catch (Exception ex)
         {
             logger.LogError(ex, "Profile file: {ProfileFile}, Error: {ErrorMessage}", file.FullName, ex.Message);
-            MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK);
+            ErrorDialog.Show("Error", ex.Message);
         }
     }
 
@@ -105,7 +105,7 @@ public partial class MainWindowViewModel
         catch (Exception ex)
         {
             logger.LogError(ex, "Profile file: {ProfileFile}, Error: {ErrorMessage}", file.FullName, ex.Message);
-            MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK);
+            ErrorDialog.Show("Error", ex.Message);
         }
     }
 

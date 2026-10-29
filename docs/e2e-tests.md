@@ -30,6 +30,8 @@ They take about a minute. Stop the sample AppHost in Visual Studio first: the te
 | 🎛️ `Simulator_Page_Controls_The_Writing` | Start, a burst, a roll and Stop on the simulator page, started by the AppHost without the viewer | The page does not change as expected, or it logs an error, a failed request or a page error |
 | 🚀 `Viewer_Starts_From_The_AppHost_With_A_Window` | Starts the AppHost with the viewer, as F5 does | The viewer's window does not show |
 
+Every check for a crash also fails on a plain Windows message box: the app shows its errors in its own dialog style (`ErrorDialog`, an Atc.Wpf `InfoDialogBox`).
+
 Each live test opens its folder through a profile with no log format set. The viewer must find the format from the files. Before a fix, opening a folder this way crashed; without that fix, `Follows_Appends_Rolls_Deletes_And_New_Files` fails on the app's "Error" dialog.
 
 ## 🔒 What they never touch

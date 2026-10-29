@@ -107,11 +107,7 @@ public partial class App
 
         logger.LogError($"CurrentDomain Unhandled Exception: {exceptionMessage}");
 
-        MessageBox.Show(
-            exceptionMessage,
-            "CurrentDomain Unhandled Exception",
-            MessageBoxButton.OK,
-            MessageBoxImage.Error);
+        ErrorDialog.Show("CurrentDomain Unhandled Exception", exceptionMessage);
     }
 
     /// <summary>
@@ -134,11 +130,7 @@ public partial class App
 
         logger.LogError($"Dispatcher Unhandled Exception: {exceptionMessage}");
 
-        MessageBox.Show(
-            exceptionMessage,
-            "Dispatcher Unhandled Exception",
-            MessageBoxButton.OK,
-            MessageBoxImage.Error);
+        ErrorDialog.Show("Dispatcher Unhandled Exception", exceptionMessage);
 
         e.Handled = true;
         Shutdown(-1);

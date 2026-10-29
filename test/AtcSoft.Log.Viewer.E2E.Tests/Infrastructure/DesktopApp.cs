@@ -6,6 +6,11 @@ namespace AtcSoft.Log.Viewer.E2E.Infrastructure;
 /// </summary>
 internal sealed class DesktopApp : IDisposable
 {
+    /// <summary>
+    /// The window class of a plain Windows message box (and the common file dialogs).
+    /// </summary>
+    private const string PlainMessageBoxClass = "#32770";
+
     public static readonly TimeSpan StartTimeout = TimeSpan.FromSeconds(90);
     public static readonly TimeSpan WindowTimeout = TimeSpan.FromSeconds(20);
     public static readonly TimeSpan ElementTimeout = TimeSpan.FromSeconds(10);
@@ -125,19 +130,24 @@ internal sealed class DesktopApp : IDisposable
     }
 
     /// <summary>
-    /// Fails when the app shows one of its crash message boxes, or has exited.
+    /// Fails when the app shows one of its crash dialogs or a plain Windows message box
+    /// (not in the app's style), or has exited.
     /// </summary>
     public void ShouldNotHaveCrashed()
     {
         ThrowIfExited("the check for crash dialogs");
 
-        var crash = Windows().FirstOrDefault(w => CrashTitles.Any(t => string.Equals(SafeName(w), t, StringComparison.Ordinal)));
+        var windows = Windows();
+        var crash = windows.FirstOrDefault(w => CrashTitles.Any(t => string.Equals(SafeName(w), t, StringComparison.Ordinal)));
         if (crash is not null)
         {
-            var text = string.Join(
-                " | ",
-                SafeFindAll(crash, Conditions.ByControlType(ControlType.Text)).Select(SafeName).Where(x => x.Length > 0));
-            throw Fail($"The app shows the crash dialog '{SafeName(crash)}': {text}");
+            throw Fail($"The app shows the crash dialog '{SafeName(crash)}' ({SafeClassName(crash)}): {TextOf(crash)}");
+        }
+
+        var plain = windows.FirstOrDefault(w => string.Equals(SafeClassName(w), PlainMessageBoxClass, StringComparison.Ordinal));
+        if (plain is not null)
+        {
+            throw Fail($"The app shows a plain Windows message box '{SafeName(plain)}', not a dialog in its own style: {TextOf(plain)}");
         }
     }
 
@@ -433,6 +443,26 @@ internal sealed class DesktopApp : IDisposable
             return string.Empty;
         }
     }
+
+    private static string SafeClassName(AutomationElement element)
+    {
+        try
+        {
+            return element.Properties.ClassName.ValueOrDefault ?? string.Empty;
+        }
+        catch (System.Runtime.InteropServices.COMException)
+        {
+            return string.Empty;
+        }
+    }
+
+    private static string TextOf(AutomationElement window)
+        => string.Join(
+            " | ",
+            SafeFindAll(window, TrueCondition.Default)
+                .Where(e => e.Properties.ControlType.ValueOrDefault == ControlType.Text)
+                .Select(SafeName)
+                .Where(x => x.Length > 0));
 
     private static bool SafeMatch<T>(
         Func<T, bool> match,
