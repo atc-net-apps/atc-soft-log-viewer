@@ -107,6 +107,47 @@ public sealed class TailFileTests : IDisposable
     }
 
     [Fact]
+    public async Task Start_WithStartOffset_RaisesTheLinesAfterIt()
+    {
+        // Arrange - the collector read the first line, and the logger wrote the second before tailing started
+        var file = CreateEmptyFile("app.log");
+        await File.WriteAllTextAsync(file.FullName, "line 1\nline 2\n", CancellationToken);
+        var received = new ConcurrentQueue<TailLine>();
+        var tailFile = new TailFile(file, lastLineNumber: 1, startOffset: "line 1\n".Length);
+        tailFile.LineAdded += (_, e) => received.Enqueue(e.Line);
+        tailFiles.Add(tailFile);
+
+        // Act
+        tailFile.Start();
+
+        // Assert
+        (await WaitUntil(() => !received.IsEmpty)).Should().BeTrue();
+        received.Select(x => (x.Line, x.LineNumber)).Should().Equal(("line 2", 2L));
+    }
+
+    [Fact]
+    public async Task RenamedFile_ItsLastLinesAreReadBeforeTheNewFile()
+    {
+        // Arrange - pause, so the last lines and the rename happen before any read
+        var file = CreateEmptyFile("app.log");
+        var received = new ConcurrentQueue<TailLine>();
+        var tailFile = StartTail(file, received.Enqueue);
+        tailFile.Pause();
+        await File.AppendAllLinesAsync(file.FullName, ["last before roll"], CancellationToken);
+        File.Move(file.FullName, Path.Combine(directory.FullName, "app.1.log"));
+        await File.WriteAllLinesAsync(file.FullName, ["first after roll"], CancellationToken);
+        await Task.Delay(300, CancellationToken);
+
+        // Act
+        tailFile.Resume();
+
+        // Assert
+        (await WaitUntil(() => received.Count >= 2)).Should().BeTrue();
+        await Task.Delay(300, CancellationToken);
+        received.Select(x => (x.Line, x.LineNumber)).Should().Equal(("last before roll", 1L), ("first after roll", 1L));
+    }
+
+    [Fact]
     public async Task Stop_StopsRaisingLines()
     {
         // Arrange

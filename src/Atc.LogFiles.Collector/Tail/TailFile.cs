@@ -19,6 +19,8 @@ public class TailFile : IDisposable
     private readonly MemoryStream partialLine = new();
     private readonly byte[] readBuffer = new byte[64 * 1024];
     private long offset;
+    private long? pendingStartOffset;
+    private string? renamedToPath;
     private long numberOfLines;
     private int isReading;
     private int isReadRequested;
@@ -29,12 +31,14 @@ public class TailFile : IDisposable
 
     public TailFile(
         FileInfo file,
-        long lastLineNumber = 0)
+        long lastLineNumber = 0,
+        long? startOffset = null)
     {
         ArgumentNullException.ThrowIfNull(file);
 
         this.file = file;
         numberOfLines = lastLineNumber;
+        pendingStartOffset = startOffset;
 
         fileWatcher = new FileSystemWatcher(file.Directory!.FullName)
         {
@@ -55,10 +59,10 @@ public class TailFile : IDisposable
 
     public void Start()
     {
+        // Start where the caller stopped reading, so lines written in between are not skipped
         file.Refresh();
-        offset = file.Exists
-            ? file.Length
-            : 0;
+        offset = pendingStartOffset ?? (file.Exists ? file.Length : 0);
+        pendingStartOffset = null;
 
         isPaused = false;
         isRunning = true;
@@ -121,6 +125,13 @@ public class TailFile : IDisposable
         object sender,
         FileSystemEventArgs e)
     {
+        if (e is RenamedEventArgs renamed &&
+            string.Equals(renamed.OldFullPath, file.FullName, StringComparison.OrdinalIgnoreCase))
+        {
+            // Rolled by rename: read what is left of the file under its new name before starting over
+            Volatile.Write(ref renamedToPath, renamed.FullPath);
+        }
+
         Interlocked.Exchange(ref isResetRequested, 1);
         RequestRead();
     }
@@ -165,42 +176,17 @@ public class TailFile : IDisposable
         {
             if (Interlocked.Exchange(ref isResetRequested, 0) == 1)
             {
+                var renamedTo = Interlocked.Exchange(ref renamedToPath, null);
+                if (renamedTo is not null)
+                {
+                    ReadToEnd(renamedTo);
+                    RaisePartialLine();
+                }
+
                 ResetToStartOfFile();
             }
 
-            if (!File.Exists(file.FullName))
-            {
-                return;
-            }
-
-            using var stream = new FileStream(
-                file.FullName,
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.ReadWrite | FileShare.Delete,
-                bufferSize: 1);
-
-            if (stream.Length < offset)
-            {
-                // Truncated or replaced by a new file
-                ResetToStartOfFile();
-            }
-
-            if (stream.Length == offset)
-            {
-                return;
-            }
-
-            stream.Seek(offset, SeekOrigin.Begin);
-
-            int bytesRead;
-            while (isRunning &&
-                   (bytesRead = stream.Read(readBuffer, 0, readBuffer.Length)) > 0)
-            {
-                var skip = GetPreambleLength(bytesRead);
-                ProcessBytes(readBuffer.AsSpan(skip, bytesRead - skip));
-                offset += bytesRead;
-            }
+            ReadToEnd(file.FullName);
         }
         catch (IOException)
         {
@@ -209,6 +195,54 @@ public class TailFile : IDisposable
         catch (UnauthorizedAccessException)
         {
             // The file is temporarily inaccessible; the next notification or poll retries.
+        }
+    }
+
+    private void ReadToEnd(string path)
+    {
+        if (!File.Exists(path))
+        {
+            return;
+        }
+
+        using var stream = new FileStream(
+            path,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.ReadWrite | FileShare.Delete,
+            bufferSize: 1);
+
+        if (stream.Length < offset)
+        {
+            // Truncated or replaced by a new file
+            ResetToStartOfFile();
+        }
+
+        if (stream.Length == offset)
+        {
+            return;
+        }
+
+        stream.Seek(offset, SeekOrigin.Begin);
+
+        int bytesRead;
+        while (isRunning &&
+               (bytesRead = stream.Read(readBuffer, 0, readBuffer.Length)) > 0)
+        {
+            var skip = GetPreambleLength(bytesRead);
+            ProcessBytes(readBuffer.AsSpan(skip, bytesRead - skip));
+            offset += bytesRead;
+        }
+    }
+
+    /// <summary>
+    /// Raises a last line that has no line break, at the end of a file that won't grow any more.
+    /// </summary>
+    private void RaisePartialLine()
+    {
+        if (partialLine.Length > 0)
+        {
+            RaiseLine(ReadOnlySpan<byte>.Empty);
         }
     }
 

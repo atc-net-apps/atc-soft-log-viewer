@@ -129,6 +129,15 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
     public void MonitorFileIfNeeded(
         FileInfo fileInfo,
         long lastLineNumber = 0)
+        => MonitorFileIfNeeded(fileInfo, lastLineNumber, startOffset: null);
+
+    /// <param name="fileInfo">The file.</param>
+    /// <param name="lastLineNumber">The number of lines already read.</param>
+    /// <param name="startOffset">The byte position where reading stopped; <see langword="null"/> starts at the end of the file.</param>
+    private void MonitorFileIfNeeded(
+        FileInfo fileInfo,
+        long lastLineNumber,
+        long? startOffset)
     {
         ArgumentNullException.ThrowIfNull(fileInfo);
 
@@ -141,6 +150,7 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
         var monitoredFile = new MonitoredFile(
             fileInfo,
             lastLineNumber,
+            startOffset,
             CreateAssembler(fileInfo, entry => CollectedEntry?.Invoke(this, new LogEntryEventArgs(entry))));
 
         if (monitoredFiles.TryAdd(fileInfo.FullName, monitoredFile))
@@ -191,6 +201,17 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
         FileInfo file,
         CancellationToken cancellationToken)
     {
+        var (isSuccessFul, lastLineNumber, _) = await ReadAndParseLinesToEnd(file, cancellationToken)
+            .ConfigureAwait(continueOnCapturedContext: false);
+
+        return (isSuccessFul, lastLineNumber);
+    }
+
+    /// <returns>Whether any entry was found, the number of lines, and the byte position where reading stopped.</returns>
+    private async Task<(bool IsSuccessFul, long LastLineNumber, long EndOffset)> ReadAndParseLinesToEnd(
+        FileInfo file,
+        CancellationToken cancellationToken)
+    {
         var hasAnyEntries = false;
         var assembler = CreateAssembler(
             file,
@@ -201,6 +222,7 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
             });
 
         long lineNumber = 0;
+        long endOffset;
         using (var reader = OpenReader(file))
         {
             while (await reader.ReadLineAsync(cancellationToken).ConfigureAwait(continueOnCapturedContext: false) is { } line)
@@ -208,11 +230,14 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
                 lineNumber++;
                 assembler.AddLine(lineNumber, line);
             }
+
+            // At the end of the stream, the reader has consumed every byte it read
+            endOffset = reader.BaseStream.Position;
         }
 
         assembler.Flush();
 
-        return (hasAnyEntries, lineNumber);
+        return (hasAnyEntries, lineNumber, endOffset);
     }
 
     internal static IList<FileInfo> GetFiles(
@@ -287,7 +312,7 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
         bool useMonitoring,
         CancellationToken cancellationToken)
     {
-        var (isSuccessFul, lastLineNumber) = await ReadAndParseLines(
+        var (isSuccessFul, lastLineNumber, endOffset) = await ReadAndParseLinesToEnd(
                 file,
                 cancellationToken)
             .ConfigureAwait(continueOnCapturedContext: false);
@@ -301,7 +326,7 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
 
         if (useMonitoring)
         {
-            MonitorFileIfNeeded(file, lastLineNumber);
+            MonitorFileIfNeeded(file, lastLineNumber, endOffset);
         }
 
         return true;
@@ -332,10 +357,11 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
         public MonitoredFile(
             FileInfo file,
             long lastLineNumber,
+            long? startOffset,
             LogEntryAssembler assembler)
         {
             this.assembler = assembler;
-            tailFile = new TailFile(file, lastLineNumber);
+            tailFile = new TailFile(file, lastLineNumber, startOffset);
             tailFile.LineAdded += OnLineAdded;
             flushTimer = new Timer(_ => Flush());
         }
