@@ -98,10 +98,6 @@
                                     Header="Application settings"
                                     Icon="{Binding Source={x:Static fontIcons:IcoFontType.UiSettings}, Converter={StaticResource FontIconImageConverter}, ConverterParameter={StaticResource AtcApps.Brushes.ThemeForeground}}" />
                                 <fluent:Button
-                                    Command="{Binding Path=OpenApplicationCheckForUpdatesCommand}"
-                                    Header="Check for updates"
-                                    Icon="{Binding Source={x:Static fontIcons:FontBootstrapType.Download}, Converter={StaticResource FontIconImageConverter}, ConverterParameter={StaticResource AtcApps.Brushes.ThemeForeground}}" />
-                                <fluent:Button
                                     Command="{Binding Path=OpenApplicationAboutCommand}"
                                     Header="About"
                                     Icon="{Binding Source={x:Static fontIcons:FontAwesomeSolidType.InfoCircle}, Converter={StaticResource FontIconImageConverter}, ConverterParameter={StaticResource AtcApps.Brushes.ThemeForeground}}" />
@@ -275,34 +271,6 @@
                 </fluent:Ribbon>
                 <!--  ::::::::::::::::::::::::::::::::::::::::::::::  -->
                 <atc:GridEx Grid.Row="1" Rows="Auto,*">
-                    <StackPanel
-                        Grid.Row="0"
-                        Background="DarkOrange"
-                        Visibility="{Binding Path=NewVersionIsAvailable, Converter={StaticResource StringNullOrEmptyToVisibilityCollapsedConverter}}">
-                        <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                            <atc:ImageButton Command="{Binding Path=OpenApplicationCheckForUpdatesCommand}" Content="{Binding Path=NewVersionIsAvailable, FallbackValue='New version of LogViewer is available'}">
-                                <atc:ImageButton.Resources>
-                                    <Style TargetType="{x:Type atc:ImageButton}">
-                                        <Setter Property="Margin" Value="0,5" />
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="{x:Type atc:ImageButton}">
-                                                    <Border x:Name="Border" Background="Transparent">
-                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="Border" Property="Opacity" Value="0.5" />
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </atc:ImageButton.Resources>
-                            </atc:ImageButton>
-                        </StackPanel>
-                    </StackPanel>
                     <Grid Grid.Row="1">
                         <!--  ListView  -->
                         <atc:GridEx
@@ -474,8 +442,6 @@
             </atc:FlyoutPresenter>
         </atc:Flyout>
 
-        <!--  Toast notifications (e.g. new version available)  -->
-        <atc:ToastNotificationArea MaxItems="3" Position="BottomRight" />
     </Grid>
 
 </atc:NiceWindow>

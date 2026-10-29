@@ -8,46 +8,6 @@ namespace AtcSoft.Log.Viewer.Wpf.App;
 [SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable", Justification = "OK.")]
 public partial class MainWindowViewModel
 {
-    private async Task CheckForUpdates()
-    {
-        var hasConnection = await NetworkInformationHelper
-            .HasConnectionAsync(CancellationToken.None)
-            .ConfigureAwait(false);
-
-        if (!hasConnection)
-        {
-            return;
-        }
-
-        var currentVersion = Assembly
-            .GetExecutingAssembly()
-            .GetName()
-            .Version!
-            .ToString();
-
-        var latestVersion = await gitHubReleaseService
-            .GetLatestVersion()
-            .ConfigureAwait(false);
-
-        if (latestVersion is null)
-        {
-            return;
-        }
-
-        if (Version.TryParse(currentVersion, out var cv) &&
-            Version.TryParse(latestVersion.ToString(), out var lv) &&
-            lv.GreaterThan(cv))
-        {
-            NewVersionIsAvailable = "New version of LogViewer is available";
-
-            toastNotificationService.ShowInformation(
-                "New version available",
-                $"LogViewer {lv} is available (current: {cv}). Click to see details.",
-                expirationTime: TimeSpan.FromSeconds(15),
-                onClick: () => Application.Current.Dispatcher.Invoke(OpenApplicationCheckForUpdatesCommandHandler));
-        }
-    }
-
     private void LoadRecentOpenFiles()
     {
         var recentOpenFileViewModels = RecentOpenFileHelper.Load(App.LogViewerProgramDataRecentProfilesDirectory);

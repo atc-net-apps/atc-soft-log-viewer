@@ -76,9 +76,6 @@ public partial class App
                 services.AddSingleton<ISerilogFileCollector, SerilogFileCollector>();
 
                 services.AddSingleton<ILogAnalyzer, Atc.LogAnalyzer.LogAnalyzer>();
-                services.AddSingleton<IGitHubReleaseService, GitHubReleaseService>();
-                services.AddSingleton<ICheckForUpdatesBoxDialogViewModel, CheckForUpdatesBoxDialogViewModel>();
-                services.AddSingleton<IToastNotificationService, ToastNotificationService>();
                 services.AddSingleton<StatusBarViewModel>();
                 services.AddSingleton<MainWindowViewModel>();
                 services.AddSingleton<MainWindow>();

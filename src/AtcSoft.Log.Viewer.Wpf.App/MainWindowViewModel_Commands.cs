@@ -32,9 +32,6 @@ public partial class MainWindowViewModel
     public IRelayCommand OpenApplicationSettingsCommand
         => new RelayCommand(OpenApplicationSettingsCommandHandler);
 
-    public IRelayCommand OpenApplicationCheckForUpdatesCommand
-        => new RelayCommand(OpenApplicationCheckForUpdatesCommandHandler, CanOpenApplicationCheckForUpdatesCommandHandler);
-
     public IRelayCommand OpenApplicationAboutCommand
         => new RelayCommand(OpenApplicationAboutCommandHandler);
 
@@ -232,12 +229,6 @@ public partial class MainWindowViewModel
         var customAppSettingsFile = new FileInfo(Path.Combine(App.LogViewerCommonApplicationDataDirectory.FullName, AtcFileNameConstants.AppSettingsCustom));
         FileHelper.WriteAllText(customAppSettingsFile, applicationOptionsAsJson);
     }
-
-    private static bool CanOpenApplicationCheckForUpdatesCommandHandler()
-        => NetworkInformationHelper.HasConnection();
-
-    private void OpenApplicationCheckForUpdatesCommandHandler()
-        => new CheckForUpdatesBoxDialog(checkForUpdatesBoxDialogViewModel).ShowDialog();
 
     private async Task OpenLogFolderCommandHandler()
     {

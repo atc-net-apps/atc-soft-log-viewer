@@ -12,10 +12,6 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
     private readonly List<LogEntryBatch> earlyBatches = [];
     private readonly ILogger<MainWindowViewModel> logger;
     private readonly ILogAnalyzer logAnalyzer;
-    private readonly IGitHubReleaseService gitHubReleaseService;
-    private readonly ICheckForUpdatesBoxDialogViewModel checkForUpdatesBoxDialogViewModel;
-    private readonly IToastNotificationService toastNotificationService;
-    private string? newVersionIsAvailable;
     private bool isHighlightsFlyoutOpen;
     private long displayedFilterVersion;
     private int filterRequestId;
@@ -39,25 +35,16 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
     public MainWindowViewModel(
         ILogger<MainWindowViewModel> logger,
         ILogAnalyzer logAnalyzer,
-        IGitHubReleaseService gitHubReleaseService,
-        ICheckForUpdatesBoxDialogViewModel checkForUpdatesBoxDialogViewModel,
-        IToastNotificationService toastNotificationService,
         StatusBarViewModel statusBarViewModel,
         IOptions<BasicApplicationOptions> applicationOptions)
     {
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(logAnalyzer);
-        ArgumentNullException.ThrowIfNull(gitHubReleaseService);
-        ArgumentNullException.ThrowIfNull(checkForUpdatesBoxDialogViewModel);
-        ArgumentNullException.ThrowIfNull(toastNotificationService);
         ArgumentNullException.ThrowIfNull(statusBarViewModel);
         ArgumentNullException.ThrowIfNull(applicationOptions);
 
         this.logger = logger;
         this.logAnalyzer = logAnalyzer;
-        this.gitHubReleaseService = gitHubReleaseService;
-        this.checkForUpdatesBoxDialogViewModel = checkForUpdatesBoxDialogViewModel;
-        this.toastNotificationService = toastNotificationService;
 
         Icon = App.DefaultIcon;
 
@@ -84,12 +71,6 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
         {
             OpenLastUsedProfileCommand.ExecuteAsync(parameter: null);
         }
-
-        Task.Factory.StartNew(
-            async () => await CheckForUpdates().ConfigureAwait(false),
-            CancellationToken.None,
-            TaskCreationOptions.LongRunning,
-            TaskScheduler.Default);
     }
 
     public bool IsHighlightsFlyoutOpen
@@ -113,16 +94,6 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
         set
         {
             highlightEditorViewModel = value;
-            OnPropertyChanged();
-        }
-    }
-
-    public string? NewVersionIsAvailable
-    {
-        get => newVersionIsAvailable;
-        set
-        {
-            newVersionIsAvailable = value;
             OnPropertyChanged();
         }
     }
