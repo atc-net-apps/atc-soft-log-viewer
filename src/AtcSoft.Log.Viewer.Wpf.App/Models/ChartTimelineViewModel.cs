@@ -102,16 +102,16 @@ public class ChartTimelineViewModel : ViewModelBase
         switch (SelectedInterval)
         {
             case nameof(ChartTimelineMode.Latest12Hours):
-                PopulateSeriesLatestHours(12);
+                PopulateSeries(TimeSpan.FromHours(1), bucketCount: 12, labelFormat: "H:00");
                 break;
             case nameof(ChartTimelineMode.Latest24Hours):
-                PopulateSeriesLatestHours(24);
+                PopulateSeries(TimeSpan.FromHours(1), bucketCount: 24, labelFormat: "H:00");
                 break;
             case nameof(ChartTimelineMode.Latest48Hours):
-                PopulateSeriesLatestHours(48);
+                PopulateSeries(TimeSpan.FromHours(1), bucketCount: 48, labelFormat: "H:00");
                 break;
             case nameof(ChartTimelineMode.Latest60Minutes):
-                PopulateSeriesLatest60Minutes();
+                PopulateSeries(TimeSpan.FromMinutes(1), bucketCount: 60, labelFormat: "HH:mm");
                 break;
         }
     }
@@ -119,38 +119,20 @@ public class ChartTimelineViewModel : ViewModelBase
     private void RefreshCommandHandler()
         => RefreshChart();
 
-    public void PopulateSeriesLatestHours(int latestHours)
+    private void PopulateSeries(
+        TimeSpan bucketSize,
+        int bucketCount,
+        string labelFormat)
     {
+        var timeline = LogTimeline.Create(logEntries, DateTime.Now, bucketSize, bucketCount);
+
         var seriesCollection = new List<StackedColumnSeries<long>>();
-
-        var groupedByHour = logEntries
-            .Where(entry => entry.TimeStamp > DateTime.Now.AddHours(-latestHours))
-            .GroupBy(entry => new { entry.TimeStamp.Hour, entry.LogLevel })
-            .Select(group => new
-            {
-                group.Key.Hour,
-                group.Key.LogLevel,
-                Count = group.Count(),
-            })
-            .ToList();
-
-        var now = DateTime.Now;
-        var startHour = now.AddHours(-latestHours + 1).Hour;
-
         foreach (var logLevel in LogLevels)
         {
-            var values = new long[latestHours];
-            for (var i = 0; i < latestHours; i++)
-            {
-                var targetHour = (startHour + i) % 24;
-                var count = groupedByHour.Find(x => x.Hour == targetHour && x.LogLevel == logLevel)?.Count ?? 0;
-                values[i] = count;
-            }
-
             var stackedColumnSeries = new StackedColumnSeries<long>
             {
                 Name = logLevel.ToString(),
-                Values = values,
+                Values = timeline.GetCounts(logLevel).ToArray(),
                 Fill = new SolidColorPaint(LogLevelColors[logLevel]),
                 DataLabelsPaint = new SolidColorPaint(SKColors.White),
                 DataLabelsSize = 14,
@@ -168,86 +150,14 @@ public class ChartTimelineViewModel : ViewModelBase
         // ReSharper disable once CoVariantArrayConversion
         Series = seriesCollection.ToArray();
 
-        var labels = new string[latestHours];
-        for (var i = 0; i < latestHours; i++)
-        {
-            var hour = (startHour + i) % 24;
-            labels[i] = $"{hour}:00";
-        }
-
         XAxis =
         [
             new Axis
             {
                 LabelsRotation = -90,
-                Labels = labels,
-            },
-        ];
-    }
-
-    public void PopulateSeriesLatest60Minutes()
-    {
-        var seriesCollection = new List<StackedColumnSeries<long>>();
-
-        var groupedByMinute = logEntries
-            .Where(entry => entry.TimeStamp > DateTime.Now.AddMinutes(-60))
-            .GroupBy(entry => new { entry.TimeStamp.Hour, entry.TimeStamp.Minute, entry.LogLevel })
-            .Select(group => new
-            {
-                group.Key.Hour,
-                group.Key.Minute,
-                group.Key.LogLevel,
-                Count = group.Count(),
-            })
-            .ToList();
-
-        var now = DateTime.Now;
-        var startMinute = now.AddMinutes(-59).Minute;
-        var startHour = now.AddMinutes(-59).Hour;
-
-        foreach (var logLevel in LogLevels)
-        {
-            var values = new long[60];
-            for (var i = 0; i < 60; i++)
-            {
-                var targetMinute = (startMinute + i) % 60;
-                var targetHour = (startHour + ((startMinute + i) / 60)) % 24;
-                var count = groupedByMinute.Find(x => x.Minute == targetMinute && x.Hour == targetHour && x.LogLevel == logLevel)?.Count ?? 0;
-                values[i] = count;
-            }
-
-            var stackedColumnSeries = new StackedColumnSeries<long>
-            {
-                Name = logLevel.ToString(),
-                Values = values,
-                Fill = new SolidColorPaint(LogLevelColors[logLevel]),
-                DataLabelsPaint = new SolidColorPaint(SKColors.White),
-                DataLabelsSize = 14,
-                DataLabelsPosition = DataLabelsPosition.Middle,
-                DataLabelsRotation = -90,
-                DataLabelsFormatter = point => point.Coordinate.PrimaryValue.IsZero() ? string.Empty : $"{logLevel}: {point.Coordinate.PrimaryValue}",
-            };
-
-            seriesCollection.Add(stackedColumnSeries);
-        }
-
-        // ReSharper disable once CoVariantArrayConversion
-        Series = seriesCollection.ToArray();
-
-        var labels = new string[60];
-        for (var i = 0; i < 60; i++)
-        {
-            var minute = (startMinute + i) % 60;
-            var hour = (startHour + ((startMinute + i) / 60)) % 24;
-            labels[i] = $"{hour:D2}:{minute:D2}";
-        }
-
-        XAxis =
-        [
-            new Axis
-            {
-                LabelsRotation = -90,
-                Labels = labels,
+                Labels = timeline.BucketStarts
+                    .Select(x => x.ToString(labelFormat, CultureInfo.InvariantCulture))
+                    .ToArray(),
             },
         ];
     }
