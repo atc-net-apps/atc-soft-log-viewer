@@ -97,9 +97,15 @@ public sealed class LogSimulator : IDisposable
 
         lock (syncLock)
         {
+            var oldFormat = settings.Format;
             settings = newSettings.Normalize();
             AddEvent($"Settings: {settings.Format}, {settings.LinesPerSecond} entries/s, {settings.FileCount} files, roll {settings.RollMode}" +
                      (settings.RollSizeKb > 0 ? $" at {settings.RollSizeKb} KB" : string.Empty));
+
+            if (settings.Format != oldFormat)
+            {
+                StartNewFilesForNewFormat();
+            }
         }
     }
 
@@ -321,6 +327,31 @@ public sealed class LogSimulator : IDisposable
             sb.AppendLine("System.InvalidOperationException: The operation failed");
             sb.AppendLine(CultureInfo.InvariantCulture, $"   at Contoso.{serviceName}.Worker.Process() in /src/Worker.cs:line {random.Next(20, 400)}");
             sb.AppendLine("   at Contoso.Hosting.MessagePump.Run()");
+        }
+    }
+
+    /// <summary>
+    /// Sends every service to a new file, so no file has two formats: the viewer reads one format
+    /// per folder, found from the newest file. A real system gets new files too when a deploy
+    /// changes the log layout.
+    /// </summary>
+    private void StartNewFilesForNewFormat()
+    {
+        var stamp = timeProvider.GetLocalNow().ToString("yyyyMMdd-HHmmss-fff", CultureInfo.InvariantCulture);
+        var switched = 0;
+        foreach (var serviceName in ServiceNames)
+        {
+            // A service with no file yet starts in the new format anyway
+            if (File.Exists(Path.Combine(folder.FullName, GetCurrentFileName(serviceName))))
+            {
+                currentFileNames[serviceName] = $"{serviceName}-{stamp}.log";
+                switched++;
+            }
+        }
+
+        if (switched > 0)
+        {
+            AddEvent($"Format changed to {settings.Format}: new entries go to new files (<service>-{stamp}.log). Open the folder again in the viewer to read them.");
         }
     }
 

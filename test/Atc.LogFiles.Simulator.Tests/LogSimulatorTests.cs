@@ -108,6 +108,23 @@ public sealed class LogSimulatorTests : IDisposable
     }
 
     [Fact]
+    public async Task UpdateSettings_NewFormat_StartsNewFilesAndKeepsTheOldOnesInTheOldFormat()
+    {
+        // Arrange
+        sut.UpdateSettings(new SimulatorSettings(Format: LogFormat.Serilog, FileCount: 1));
+        sut.Burst(10);
+
+        // Act
+        sut.UpdateSettings(new SimulatorSettings(Format: LogFormat.Log4Net, FileCount: 1));
+        sut.Burst(20);
+
+        // Assert
+        var newFile = FileNames().Should().ContainSingle(x => x.StartsWith("orders-", StringComparison.Ordinal)).Which;
+        (await ReadEntries(LogFormat.Serilog, "orders.log")).Should().HaveCount(10, "the old file keeps only the old format");
+        (await ReadEntries(LogFormat.Log4Net, newFile)).Should().HaveCount(20, "the new format goes to a new file");
+    }
+
+    [Fact]
     public void DeleteFile_OnlyAcceptsAFileNameInTheFolder()
     {
         // Arrange

@@ -25,7 +25,7 @@ To run the simulator alone: `dotnet run --project sample/Atc.LogFiles.Simulator`
 | On the page | What it does | What it tests in the viewer |
 |---|---|---|
 | Entries per second, files, errors %, stack traces % | Writes entries to one file per service (`orders.log`, `payments.log`, …) | Live tail, multi-line entries, many files at once |
-| Format | Serilog, NLog or log4net default layout | The parser for each format |
+| Format | Serilog, NLog or log4net default layout. A change sends new entries to new files (`orders-<time>.log`), so no file has two formats | The parser for each format. The viewer reads one format per folder: open the folder again after a change |
 | Roll: **Rename** | `orders.log` → `orders.log.1`, older ones shift up, a new `orders.log` starts (log4net) | A tailed file that is renamed; its last lines must not be lost |
 | Roll: **New file** | New entries go to `orders-<time>.log` (Serilog and NLog archives) | Picking up new files in the folder |
 | Roll: **Copy and truncate** | `orders.log` is copied to `orders.log.<time>` and emptied (logrotate) | A tailed file that is truncated |
