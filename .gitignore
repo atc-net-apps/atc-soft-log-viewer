@@ -432,3 +432,6 @@ FodyWeavers.xsd
 
 # Test results
 TestResults/
+
+# Test data log files are part of the tests
+!test/**/TestData/*.log
