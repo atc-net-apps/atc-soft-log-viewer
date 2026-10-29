@@ -1,3 +1,5 @@
+global using System.Collections.Concurrent;
+
 global using Atc.Helpers;
 global using Atc.LogFiles.Collector;
 global using Atc.LogFiles.Collector.Log4Net;

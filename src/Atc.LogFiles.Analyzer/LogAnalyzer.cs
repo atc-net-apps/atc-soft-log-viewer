@@ -13,6 +13,8 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
     private readonly INLogFileCollector nlogFileCollector;
     private readonly ISerilogFileCollector serilogFileCollector;
     private readonly Lock syncLock = new();
+    private readonly Lock raiseLock = new();
+    private readonly ConcurrentDictionary<string, bool> newFiles = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<AtcLogEntry> logEntries = [];
     private readonly List<AtcLogEntry> pendingEntries = [];
     private readonly long[] logLevelCounts = new long[(int)LogLevel.None + 1];
@@ -314,11 +316,20 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
         if (fileSystemWatcher is not null)
         {
             fileSystemWatcher.Created -= OnFileCreated;
+            fileSystemWatcher.Changed -= OnFileChanged;
             fileSystemWatcher.Dispose();
         }
 
-        fileSystemWatcher = new FileSystemWatcher(directory.FullName) { EnableRaisingEvents = true, };
+        newFiles.Clear();
+
+        fileSystemWatcher = new FileSystemWatcher(directory.FullName)
+        {
+            NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size,
+        };
+
         fileSystemWatcher.Created += OnFileCreated;
+        fileSystemWatcher.Changed += OnFileChanged;
+        fileSystemWatcher.EnableRaisingEvents = true;
     }
 
     private void OnCollectedEntry(
@@ -358,44 +369,99 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
         }
     }
 
+    /// <summary>
+    /// A new file in the watched folder. Loggers often create the file before they write the first line,
+    /// so a file that can't be read as a log yet is tried again when it changes (<see cref="OnFileChanged"/>).
+    /// </summary>
     private void OnFileCreated(
         object sender,
         FileSystemEventArgs e)
     {
-        if (activeLogFileCollectorConfiguration is null)
+        var config = activeLogFileCollectorConfiguration;
+        if (config is null ||
+            !MatchesFileNameTerms(e.Name, config))
         {
             return;
         }
 
-        var fileInfo = new FileInfo(e.FullPath);
-
-        TaskHelper.FireAndForget(
-            CollectFile(
-                activeLogFileCollectorType,
-                fileInfo,
-                activeLogFileCollectorConfiguration,
-                useMonitoring: true,
-                CancellationToken.None));
+        newFiles.TryAdd(e.FullPath, false);
+        TryCollectNewFile(e.FullPath, config);
     }
 
-    private void NotifyAndClearBuffer(bool raiseWhenEmpty)
+    private void OnFileChanged(
+        object sender,
+        FileSystemEventArgs e)
     {
-        AtcLogEntry[] entries;
-        long version;
-        lock (syncLock)
+        var config = activeLogFileCollectorConfiguration;
+        if (config is not null &&
+            newFiles.ContainsKey(e.FullPath))
         {
-            entries = [.. pendingEntries];
-            pendingEntries.Clear();
-            isFlushScheduled = false;
-            version = filterVersion;
+            TryCollectNewFile(e.FullPath, config);
         }
+    }
 
-        if (entries.Length == 0 && !raiseWhenEmpty)
+    private static bool MatchesFileNameTerms(
+        string? fileName,
+        LogFileCollectorConfiguration config)
+        => config.FileNameTerms.Count == 0 ||
+           (fileName is not null &&
+            config.FileNameTerms.Any(term => fileName.Contains(term, StringComparison.OrdinalIgnoreCase)));
+
+    private void TryCollectNewFile(
+        string fullPath,
+        LogFileCollectorConfiguration config)
+    {
+        // The value is true while the file is being collected, so a burst of changes collects it once
+        if (!newFiles.TryUpdate(fullPath, newValue: true, comparisonValue: false))
         {
             return;
         }
 
-        Array.Sort(entries, static (x, y) => x.TimeStamp.CompareTo(y.TimeStamp));
-        CollectedEntries?.Invoke(this, new LogEntryBatchEventArgs(new LogEntryBatch(entries, version)));
+        var collectorType = activeLogFileCollectorType;
+        var collector = GetCollector(collectorType);
+        var file = new FileInfo(fullPath);
+
+        if (!collector.CanParseFileFormat(file))
+        {
+            // Still empty or without a complete line; the next change tries again
+            newFiles.TryUpdate(fullPath, newValue: false, comparisonValue: true);
+            return;
+        }
+
+        newFiles.TryRemove(fullPath, out _);
+
+        TaskHelper.FireAndForget(
+            CollectAndNotify(
+                collectorType,
+                config,
+                () => collector.CollectFile(file, config, useMonitoring: true, CancellationToken.None)));
+    }
+
+    /// <summary>
+    /// Raises the buffered entries. Batches are raised one at a time and in order, from whichever thread
+    /// flushes; collecting goes on meanwhile, because it only needs <see cref="syncLock"/>.
+    /// </summary>
+    private void NotifyAndClearBuffer(bool raiseWhenEmpty)
+    {
+        lock (raiseLock)
+        {
+            AtcLogEntry[] entries;
+            long version;
+            lock (syncLock)
+            {
+                entries = [.. pendingEntries];
+                pendingEntries.Clear();
+                isFlushScheduled = false;
+                version = filterVersion;
+            }
+
+            if (entries.Length == 0 && !raiseWhenEmpty)
+            {
+                return;
+            }
+
+            Array.Sort(entries, static (x, y) => x.TimeStamp.CompareTo(y.TimeStamp));
+            CollectedEntries?.Invoke(this, new LogEntryBatchEventArgs(new LogEntryBatch(entries, version)));
+        }
     }
 }
