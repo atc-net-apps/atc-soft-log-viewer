@@ -209,13 +209,14 @@ public partial class App
     /// <summary>
     /// Copies the data of earlier versions from ProgramData to the per-user folder once, and creates the folders.
     /// </summary>
-    /// <returns>The error when the copy failed; the app then starts with empty data.</returns>
+    /// <returns>The error when the copy or creating the folders failed; it is logged and the app starts anyway.</returns>
     private static Exception? CopyLegacyDataIfNeeded()
     {
         Exception? error = null;
         try
         {
             LegacyDataMigrator.CopyIfNeeded(AppDataPaths.LegacyRoot, DataPaths.Root);
+            DataPaths.EnsureCreated();
         }
         catch (IOException ex)
         {
@@ -226,7 +227,6 @@ public partial class App
             error = ex;
         }
 
-        DataPaths.EnsureCreated();
         return error;
     }
 
