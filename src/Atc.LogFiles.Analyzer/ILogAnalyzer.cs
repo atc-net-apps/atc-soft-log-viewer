@@ -7,6 +7,12 @@ public interface ILogAnalyzer
     /// </summary>
     event EventHandler<LogEntryBatchEventArgs>? CollectedEntries;
 
+    /// <summary>
+    /// Occurs when lines or files were found that are not read because they are in another format
+    /// (at most once per batch interval). Read them with <see cref="GetNotRead"/>.
+    /// </summary>
+    event EventHandler? NotReadChanged;
+
     LogFileCollectorType DetermineCollectorType(DirectoryInfo directory);
 
     LogFileCollectorType DetermineCollectorType(FileInfo file);
@@ -40,6 +46,12 @@ public interface ILogAnalyzer
     AtcLogEntry[] GetFilteredLogEntries();
 
     LogStatistics GetLogStatistics();
+
+    /// <summary>
+    /// Gets the lines and files that were not read because they are in another format.
+    /// </summary>
+    /// <returns>The summary.</returns>
+    NotReadSummary GetNotRead();
 
     void ClearLogEntries();
 

@@ -6,7 +6,8 @@ namespace Atc.LogFiles.Collector;
 /// <remarks>
 /// An entry starts with a root line (time stamp and level). The lines after it, up to the next root line,
 /// belong to the entry - for example a stack trace or a JSON payload. A line that starts with a digit but is
-/// not a root line ends the entry, and the lines after it are ignored until the next root line.
+/// not a root line ends the entry, and the lines after it are ignored until the next root line. Such a line
+/// (and one before the first root line) is reported as not read: it is most likely in another log format.
 /// An entry is raised when the next root line arrives, or when <see cref="Flush"/> is called.
 /// </remarks>
 internal sealed class LogEntryAssembler
@@ -16,16 +17,19 @@ internal sealed class LogEntryAssembler
 
     private readonly Func<long, string, AtcLogEntry?> parseRootLine;
     private readonly Action<AtcLogEntry> onEntry;
+    private readonly Action<long, string>? onLineNotRead;
     private readonly List<string> followingLines = [];
     private AtcLogEntry? pendingEntry;
     private bool acceptsFollowingLines;
 
     public LogEntryAssembler(
         Func<long, string, AtcLogEntry?> parseRootLine,
-        Action<AtcLogEntry> onEntry)
+        Action<AtcLogEntry> onEntry,
+        Action<long, string>? onLineNotRead = null)
     {
         this.parseRootLine = parseRootLine;
         this.onEntry = onEntry;
+        this.onLineNotRead = onLineNotRead;
     }
 
     public void AddLine(
@@ -45,14 +49,15 @@ internal sealed class LogEntryAssembler
             return;
         }
 
-        if (pendingEntry is null)
-        {
-            return;
-        }
-
         if (startsWithDigit)
         {
             acceptsFollowingLines = false;
+            onLineNotRead?.Invoke(lineNumber, line);
+            return;
+        }
+
+        if (pendingEntry is null)
+        {
             return;
         }
 

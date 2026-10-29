@@ -157,6 +157,66 @@ public sealed class MultiLineEntryTests : IDisposable
         entries.Single().MessageFull.Should().HaveLength(300);
     }
 
+    [Fact]
+    public async Task CollectFile_LinesInAnotherFormat_AreReportedAsNotRead()
+    {
+        // Arrange
+        var (collector, rootLine) = CreateCollector("serilog");
+        var (_, log4NetLine) = CreateCollector("log4net");
+        var file = new FileInfo(Path.Combine(directory.FullName, "mixed.log"));
+        await File.WriteAllLinesAsync(
+            file.FullName,
+            [
+                rootLine("INFO", "Application started successfully"),
+                log4NetLine("INFO", "Written after the format was changed"),
+                "   at Contoso.Orders.OrderService.Process()",
+                log4NetLine("ERROR", "Written after the format was changed, too"),
+                rootLine("INFO", "Back in the folder's format again"),
+            ],
+            CancellationToken);
+
+        var entries = new ConcurrentQueue<AtcLogEntry>();
+        var notRead = new ConcurrentQueue<LineNotReadEventArgs>();
+        ((IFileCollector)collector).CollectedEntry += (_, e) => entries.Enqueue(e.Entry);
+        ((IFileCollector)collector).LineNotRead += (_, e) => notRead.Enqueue(e);
+
+        // Act
+        await ((IFileCollector)collector).CollectFile(file, new LogFileCollectorConfiguration(), useMonitoring: false, CancellationToken);
+
+        // Assert
+        entries.Select(x => x.LineNumber).Should().Equal(1, 5);
+        notRead.Select(x => x.LineNumber).Should().Equal(2, 4);
+        notRead.Should().AllSatisfy(x => x.File.FullName.Should().Be(file.FullName));
+        notRead.First().Line.Should().Be(log4NetLine("INFO", "Written after the format was changed"));
+    }
+
+    [Fact]
+    public async Task Monitoring_AppendedLinesInAnotherFormat_AreReportedAsNotRead()
+    {
+        // Arrange
+        var (collector, rootLine) = CreateCollector("serilog");
+        var (_, log4NetLine) = CreateCollector("log4net");
+        var file = new FileInfo(Path.Combine(directory.FullName, "live-mixed.log"));
+        await File.WriteAllLinesAsync(file.FullName, [rootLine("INFO", "Application started successfully")], CancellationToken);
+
+        var notRead = new ConcurrentQueue<LineNotReadEventArgs>();
+        ((IFileCollector)collector).LineNotRead += (_, e) => notRead.Enqueue(e);
+        await ((IFileCollector)collector).CollectFile(file, new LogFileCollectorConfiguration(), useMonitoring: true, CancellationToken);
+
+        // Act
+        await File.AppendAllLinesAsync(
+            file.FullName,
+            [
+                log4NetLine("INFO", "Written after the format was changed"),
+                log4NetLine("WARN", "Written after the format was changed, too"),
+            ],
+            CancellationToken);
+
+        // Assert
+        (await WaitUntil(() => notRead.Count == 2)).Should().BeTrue();
+        notRead.Select(x => x.LineNumber).Should().Equal(2, 3);
+    }
+
     public void Dispose()
     {
         foreach (var collector in collectors)

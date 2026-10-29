@@ -11,8 +11,13 @@ internal sealed class FakeFileCollector : ILog4NetFileCollector, INLogFileCollec
 
     public event EventHandler<FilesEventArgs>? CollectedFilesDone;
 
+    public event EventHandler<LineNotReadEventArgs>? LineNotRead;
+
     public void Raise(AtcLogEntry entry)
         => CollectedEntry?.Invoke(this, new LogEntryEventArgs(entry));
+
+    public void RaiseLineNotRead(string line)
+        => LineNotRead?.Invoke(this, new LineNotReadEventArgs(new FileInfo("fake.log"), 1, line));
 
     public void RaiseFilesDone()
     {

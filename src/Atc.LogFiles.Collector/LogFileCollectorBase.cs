@@ -19,6 +19,8 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
 
     public event EventHandler<FilesEventArgs>? CollectedFilesDone;
 
+    public event EventHandler<LineNotReadEventArgs>? LineNotRead;
+
     /// <summary>
     /// The file extensions (without dot) this log format is written to.
     /// </summary>
@@ -341,7 +343,8 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
 
         return new LogEntryAssembler(
             (lineNumber, line) => ParseRootLine(sourceIdentifier, sourceSystem, lineNumber, line),
-            onEntry);
+            onEntry,
+            (lineNumber, line) => LineNotRead?.Invoke(this, new LineNotReadEventArgs(file, lineNumber, line)));
     }
 
     /// <summary>

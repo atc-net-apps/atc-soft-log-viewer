@@ -16,6 +16,16 @@ public class LogStatistics
 
     public long TraceCount { get; set; }
 
+    /// <summary>
+    /// Gets or sets the number of lines that were not read because they are in another format.
+    /// </summary>
+    public long LinesNotReadCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of files in the watched folder that are in another format.
+    /// </summary>
+    public long FilesNotReadCount { get; set; }
+
     public override string ToString()
-        => $"{nameof(Count)}: {Count}, {nameof(CriticalCount)}: {CriticalCount}, {nameof(ErrorCount)}: {ErrorCount}, {nameof(WarningCount)}: {WarningCount}, {nameof(InformationCount)}: {InformationCount}, {nameof(DebugCount)}: {DebugCount}, {nameof(TraceCount)}: {TraceCount}";
+        => $"{nameof(Count)}: {Count}, {nameof(CriticalCount)}: {CriticalCount}, {nameof(ErrorCount)}: {ErrorCount}, {nameof(WarningCount)}: {WarningCount}, {nameof(InformationCount)}: {InformationCount}, {nameof(DebugCount)}: {DebugCount}, {nameof(TraceCount)}: {TraceCount}, {nameof(LinesNotReadCount)}: {LinesNotReadCount}, {nameof(FilesNotReadCount)}: {FilesNotReadCount}";
 }

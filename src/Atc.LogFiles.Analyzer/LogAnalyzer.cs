@@ -19,8 +19,12 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
     private readonly List<AtcLogEntry> pendingEntries = [];
     private readonly long[] logLevelCounts = new long[(int)LogLevel.None + 1];
     private readonly HashSet<string> sourceSystems = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, LinesNotRead> linesNotRead = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, FileNotRead> filesNotRead = new(StringComparer.OrdinalIgnoreCase);
     private readonly Timer flushTimer;
     private bool isFlushScheduled;
+    private bool isNotReadChanged;
+    private long linesNotReadCount;
     private long filterVersion;
     private int activeCollectCount;
     private FileSystemWatcher? fileSystemWatcher;
@@ -55,6 +59,10 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
 
         flushTimer = new Timer(_ => NotifyAndClearBuffer(raiseWhenEmpty: false));
 
+        this.log4NetFileCollector.LineNotRead += OnLineNotRead;
+        this.nlogFileCollector.LineNotRead += OnLineNotRead;
+        this.serilogFileCollector.LineNotRead += OnLineNotRead;
+
         this.log4NetFileCollector.CollectedEntry += OnCollectedEntry;
         this.log4NetFileCollector.CollectedFilesDone += OnCollectedFilesDone;
 
@@ -66,6 +74,8 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
     }
 
     public event EventHandler<LogEntryBatchEventArgs>? CollectedEntries;
+
+    public event EventHandler? NotReadChanged;
 
     public LogFileCollectorType DetermineCollectorType(DirectoryInfo directory)
     {
@@ -223,7 +233,19 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
                 InformationCount = logLevelCounts[(int)LogLevel.Information],
                 DebugCount = logLevelCounts[(int)LogLevel.Debug],
                 TraceCount = logLevelCounts[(int)LogLevel.Trace],
+                LinesNotReadCount = linesNotReadCount,
+                FilesNotReadCount = filesNotRead.Count,
             };
+        }
+    }
+
+    public NotReadSummary GetNotRead()
+    {
+        lock (syncLock)
+        {
+            return new NotReadSummary(
+                [.. linesNotRead.Values.OrderBy(x => x.FilePath, StringComparer.OrdinalIgnoreCase)],
+                [.. filesNotRead.Values.OrderBy(x => x.FilePath, StringComparer.OrdinalIgnoreCase)]);
         }
     }
 
@@ -231,6 +253,9 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
     {
         lock (syncLock)
         {
+            linesNotRead.Clear();
+            filesNotRead.Clear();
+            linesNotReadCount = 0;
             logEntries.Clear();
             pendingEntries.Clear();
             sourceSystems.Clear();
@@ -359,6 +384,35 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
         }
     }
 
+    private void OnLineNotRead(
+        object? sender,
+        LineNotReadEventArgs e)
+    {
+        lock (syncLock)
+        {
+            var filePath = e.File.FullName;
+            linesNotRead[filePath] = linesNotRead.TryGetValue(filePath, out var known)
+                ? known with { Count = known.Count + 1 }
+                : new LinesNotRead(filePath, 1, e.LineNumber, e.Line);
+            linesNotReadCount++;
+            MarkNotReadChanged();
+        }
+    }
+
+    /// <summary>
+    /// Raises <see cref="NotReadChanged"/> with the next batch. Call it inside <see cref="syncLock"/>.
+    /// </summary>
+    private void MarkNotReadChanged()
+    {
+        isNotReadChanged = true;
+        if (Volatile.Read(ref activeCollectCount) == 0 &&
+            !isFlushScheduled)
+        {
+            isFlushScheduled = true;
+            flushTimer.Change(LiveBatchInterval, Timeout.InfiniteTimeSpan);
+        }
+    }
+
     private void OnCollectedFilesDone(
         object? sender,
         FilesEventArgs e)
@@ -423,9 +477,27 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
 
         if (!collector.CanParseFileFormat(file))
         {
-            // Still empty or without a complete line; the next change tries again
-            newFiles.TryUpdate(fullPath, newValue: false, comparisonValue: true);
-            return;
+            // The logger may have written its first line since the check, so the format can be ours by now
+            var format = DetermineCollectorType(file);
+            if (format == LogFileCollectorType.None)
+            {
+                // Still empty or without a complete line; the next change tries again
+                newFiles.TryUpdate(fullPath, newValue: false, comparisonValue: true);
+                return;
+            }
+
+            if (format != collectorType)
+            {
+                // A log file in another format: it is not read, but it is not silently ignored either
+                newFiles.TryRemove(fullPath, out _);
+                lock (syncLock)
+                {
+                    filesNotRead[fullPath] = new FileNotRead(fullPath, format);
+                    MarkNotReadChanged();
+                }
+
+                return;
+            }
         }
 
         newFiles.TryRemove(fullPath, out _);
@@ -447,21 +519,27 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
         {
             AtcLogEntry[] entries;
             long version;
+            bool notReadChanged;
             lock (syncLock)
             {
                 entries = [.. pendingEntries];
                 pendingEntries.Clear();
                 isFlushScheduled = false;
                 version = filterVersion;
+                notReadChanged = isNotReadChanged;
+                isNotReadChanged = false;
             }
 
-            if (entries.Length == 0 && !raiseWhenEmpty)
+            if (entries.Length > 0 || raiseWhenEmpty)
             {
-                return;
+                Array.Sort(entries, static (x, y) => x.TimeStamp.CompareTo(y.TimeStamp));
+                CollectedEntries?.Invoke(this, new LogEntryBatchEventArgs(new LogEntryBatch(entries, version)));
             }
 
-            Array.Sort(entries, static (x, y) => x.TimeStamp.CompareTo(y.TimeStamp));
-            CollectedEntries?.Invoke(this, new LogEntryBatchEventArgs(new LogEntryBatch(entries, version)));
+            if (notReadChanged)
+            {
+                NotReadChanged?.Invoke(this, EventArgs.Empty);
+            }
         }
     }
 }

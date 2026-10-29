@@ -233,6 +233,83 @@ public sealed class FolderMonitoringTests : IDisposable
         overlaps.Should().Be(0);
     }
 
+    [Fact]
+    public async Task LinesInAnotherFormat_AreCountedAsNotRead()
+    {
+        // Arrange - the logger's layout was changed while it kept writing to the same file
+        var file = await WriteLines("app.log", "started");
+        await File.AppendAllLinesAsync(file.FullName, [Log4NetLine("first in log4net"), Log4NetLine("second in log4net")], CancellationToken);
+        var changes = 0;
+        sut.NotReadChanged += (_, _) => Interlocked.Increment(ref changes);
+
+        // Act
+        await StartWatching();
+
+        // Assert
+        (await WaitUntil(() => Volatile.Read(ref changes) > 0)).Should().BeTrue();
+        var lines = sut.GetNotRead().Lines.Should().ContainSingle().Which;
+        lines.FilePath.Should().Be(file.FullName);
+        lines.Count.Should().Be(2);
+        lines.FirstLineNumber.Should().Be(2);
+        lines.FirstLine.Should().EndWith("first in log4net");
+        sut.GetLogStatistics().LinesNotReadCount.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task AppendedLinesInAnotherFormat_AreCountedAsNotRead()
+    {
+        // Arrange
+        var file = await WriteLines("app.log", "started");
+        await StartWatching();
+
+        // Act
+        await File.AppendAllLinesAsync(file.FullName, [Log4NetLine("appended in log4net")], CancellationToken);
+
+        // Assert
+        (await WaitUntil(() => sut.GetLogStatistics().LinesNotReadCount == 1)).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task NewFileInAnotherFormat_IsReportedAsNotRead()
+    {
+        // Arrange
+        await WriteLines("app.log", "started");
+        await StartWatching();
+        var changes = 0;
+        sut.NotReadChanged += (_, _) => Interlocked.Increment(ref changes);
+
+        // Act
+        var newFile = Path.Combine(directory.FullName, "app-log4net.log");
+        await File.WriteAllLinesAsync(newFile, [Log4NetLine("a file in another format")], CancellationToken);
+
+        // Assert
+        (await WaitUntil(() => Volatile.Read(ref changes) > 0)).Should().BeTrue();
+        var notRead = sut.GetNotRead().Files.Should().ContainSingle().Which;
+        notRead.FilePath.Should().Be(newFile);
+        notRead.Format.Should().Be(LogFileCollectorType.Log4Net);
+        sut.GetLogStatistics().FilesNotReadCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ClearLogEntries_ForgetsWhatWasNotRead()
+    {
+        // Arrange
+        var file = await WriteLines("app.log", "started");
+        await File.AppendAllLinesAsync(file.FullName, [Log4NetLine("in log4net")], CancellationToken);
+        await StartWatching();
+        (await WaitUntil(() => sut.GetLogStatistics().LinesNotReadCount == 1)).Should().BeTrue();
+
+        // Act
+        sut.ClearLogEntries();
+
+        // Assert
+        sut.GetNotRead().Lines.Should().BeEmpty();
+        sut.GetLogStatistics().LinesNotReadCount.Should().Be(0);
+    }
+
+    private static string Log4NetLine(string message)
+        => $"{DateTime.Now:yyyy-MM-dd HH:mm:ss,fff} [8] INFO  Worker - {message}"; // log4net's default layout
+
     public void Dispose()
     {
         sut.StopMonitoringAndClearLogEntries();
