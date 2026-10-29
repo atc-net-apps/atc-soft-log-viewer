@@ -25,9 +25,6 @@
 
   <ItemGroup>
     <PackageReference Include="Atc" Version="4.0.0" />
-    <!-- 1.0.0-local comes from build/pack-local-libraries.ps1 until the libraries are on nuget.org -->
-    <PackageReference Include="Atc.LogAnalyzer" Version="1.0.0-local" />
-    <PackageReference Include="Atc.LogCollector" Version="1.0.0-local" />
     <PackageReference Include="Atc.Wpf" Version="4.2.1" />
     <PackageReference Include="Atc.Wpf.Components" Version="4.2.1" />
     <PackageReference Include="Atc.Wpf.Controls" Version="4.2.1" />
@@ -50,6 +47,16 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AtcSoft.Log.Viewer\AtcSoft.Log.Viewer.csproj" />
+  </ItemGroup>
+
+  <!-- See "Log libraries" in Directory.Build.props -->
+  <ItemGroup Condition="'$(UseLogLibraryProjects)' == 'true'">
+    <ProjectReference Include="$(LogLibrariesRoot)src\Atc.LogAnalyzer\Atc.LogAnalyzer.csproj" />
+    <ProjectReference Include="$(LogLibrariesRoot)src\Atc.LogCollector\Atc.LogCollector.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseLogLibraryProjects)' != 'true'">
+    <PackageReference Include="Atc.LogAnalyzer" Version="$(LogLibrariesVersion)" />
+    <PackageReference Include="Atc.LogCollector" Version="$(LogLibrariesVersion)" />
   </ItemGroup>
 
   <ItemGroup>

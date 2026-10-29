@@ -167,11 +167,16 @@ Earlier versions stored them machine-wide in `%ProgramData%\ATC\atc-logviewer`. 
 
 Requirements: Windows and the .NET 10 SDK.
 
-```powershell
-# Until Atc.LogCollector and Atc.LogAnalyzer are on nuget.org: pack them from a sibling clone
-# of atc-net/atc-logviewer (../../atc-net/atc-logviewer) into local-packages/
-./build/pack-local-libraries.ps1
+Until `Atc.LogCollector` and `Atc.LogAnalyzer` are on nuget.org, the app builds them from a clone of [atc-net/atc-logviewer](https://github.com/atc-net/atc-logviewer) next to this repo:
 
+```text
+<folder>/atc-net/atc-logviewer
+<folder>/atc-net-apps/atc-soft-log-viewer
+```
+
+Another location can be given with `-p:LogLibrariesRoot=<path>/`.
+
+```powershell
 dotnet build AtcSoft.Log.Viewer.slnx -c Release
 dotnet test --solution AtcSoft.Log.Viewer.slnx -c Release
 dotnet run --project src/AtcSoft.Log.Viewer.Wpf.App -c Release

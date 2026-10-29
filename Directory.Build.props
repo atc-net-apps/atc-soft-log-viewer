@@ -27,6 +27,17 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <!--
+    Atc.LogCollector and Atc.LogAnalyzer from atc-net/atc-logviewer.
+    Temporary: project references to a clone next to this repo (..\..\atc-net\atc-logviewer), until the
+    libraries are on nuget.org (atc-logviewer LOG-5). Then set UseLogLibraryProjects to false (app LV-4).
+  -->
+  <PropertyGroup Label="Log libraries">
+    <UseLogLibraryProjects Condition="'$(UseLogLibraryProjects)' == ''">true</UseLogLibraryProjects>
+    <LogLibrariesRoot Condition="'$(LogLibrariesRoot)' == ''">$(MSBuildThisFileDirectory)..\..\atc-net\atc-logviewer\</LogLibrariesRoot>
+    <LogLibrariesVersion>1.0.0</LogLibrariesVersion>
+  </PropertyGroup>
+
   <PropertyGroup Label="Compile settings">
     <Nullable>enable</Nullable>
     <LangVersion>14.0</LangVersion>
