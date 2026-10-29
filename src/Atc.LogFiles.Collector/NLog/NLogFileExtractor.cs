@@ -11,20 +11,32 @@ public sealed class NLogFileExtractor : INLogFileExtractor
     {
         //// layout = "${longdate} ${uppercase:${level}} ${message:withexception=true}",
 
+        //// longdate is "yyyy-MM-dd HH:mm:ss.ffff" (24 characters), then one space and the level. Checking the
+        //// layout exactly keeps lines of other formats out: log4net's "yyyy-MM-dd HH:mm:ss,fff [thread] LEVEL"
+        //// would otherwise pass, with the thread skipped.
         if (line is null ||
-            line.Length < 25 ||
-            !char.IsDigit(line[0]))
+            line.Length < 27 ||
+            !char.IsDigit(line[0]) ||
+            line[19] != '.' ||
+            line[24] != ' ' ||
+            !DateTime.TryParseExact(
+                line.AsSpan(0, 24),
+                "yyyy-MM-dd HH:mm:ss.ffff",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out var dateTime))
         {
             return null;
         }
 
         try
         {
-            var dateTimeString = line[..23];
-            var dateTime = DateTime.Parse(dateTimeString, GlobalizationConstants.EnglishCultureInfo);
-
-            var indexOfLogLevelStart = line.IndexOf(' ', 24) + 1;
+            const int indexOfLogLevelStart = 25;
             var indexOfLogLevelEnd = line.IndexOf(' ', indexOfLogLevelStart);
+            if (indexOfLogLevelEnd < 0)
+            {
+                return null;
+            }
 
             var logLevelString = line[indexOfLogLevelStart..indexOfLogLevelEnd];
             var logLevel = logLevelString switch
