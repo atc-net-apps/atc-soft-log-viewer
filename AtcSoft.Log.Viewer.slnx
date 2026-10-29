@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".github/workflows/build.yml" />
+    <File Path=".github/workflows/release-please.yml" />
+    <File Path="Directory.Build.props" />
+    <File Path="global.json" />
+    <File Path="nuget.config" />
+    <File Path="README.md" />
+    <File Path="release-please-config.json" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/AtcSoft.Log.Viewer.Wpf.App/AtcSoft.Log.Viewer.Wpf.App.csproj" />
+  </Folder>
+</Solution>

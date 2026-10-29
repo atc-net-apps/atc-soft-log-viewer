@@ -18,10 +18,14 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$AtcLogViewerPath = (Join-Path $PSScriptRoot '..\..\..\atc-net\atc-logviewer')
+    [string]$AtcLogViewerPath
 )
 
 $ErrorActionPreference = 'Stop'
+if (-not $AtcLogViewerPath) {
+    # Windows PowerShell does not set $PSScriptRoot in parameter defaults
+    $AtcLogViewerPath = Join-Path $PSScriptRoot '..\..\..\atc-net\atc-logviewer'
+}
 $version = '1.0.0-local'
 $repoRoot = Split-Path $PSScriptRoot -Parent
 $output = Join-Path $repoRoot 'local-packages'

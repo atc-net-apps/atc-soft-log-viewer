@@ -25,6 +25,9 @@
 
   <ItemGroup>
     <PackageReference Include="Atc" Version="4.0.0" />
+    <!-- 1.0.0-local comes from build/pack-local-libraries.ps1 until the libraries are on nuget.org -->
+    <PackageReference Include="Atc.LogAnalyzer" Version="1.0.0-local" />
+    <PackageReference Include="Atc.LogCollector" Version="1.0.0-local" />
     <PackageReference Include="Atc.Wpf" Version="4.2.1" />
     <PackageReference Include="Atc.Wpf.Components" Version="4.2.1" />
     <PackageReference Include="Atc.Wpf.Controls" Version="4.2.1" />
@@ -44,10 +47,6 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.14" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Atc.LogAnalyzer\Atc.LogAnalyzer.csproj" />
-    <ProjectReference Include="..\Atc.LogCollector\Atc.LogCollector.csproj" />
-  </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Resources\AppIcon.ico" />
