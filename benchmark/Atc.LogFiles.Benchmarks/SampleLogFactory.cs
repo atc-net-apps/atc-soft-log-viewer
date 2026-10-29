@@ -9,7 +9,7 @@ internal static class SampleLogFactory
 
     public static FileInfo CreateSerilogFile(int entryCount)
     {
-        var directory = Directory.CreateTempSubdirectory("atc-logviewer-benchmark");
+        var directory = Directory.CreateTempSubdirectory("atc-logfiles-benchmark");
         var file = new FileInfo(Path.Combine(directory.FullName, "benchmark-20240216.log"));
 
         using var writer = new StreamWriter(file.FullName, append: false, Encoding.UTF8);

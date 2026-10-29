@@ -5,13 +5,6 @@ on:
     branches:
       - main
 
-env:
-  # Temporary until Atc.LogCollector and Atc.LogAnalyzer are on nuget.org (atc-logviewer LOG-5):
-  # the app builds them from atc-net/atc-logviewer, checked out next to the app. See "Log libraries" in Directory.Build.props.
-  # Switch the ref to main when the atc-logviewer branch is merged.
-  LOG_LIBRARIES_REF: feature/net10-upgrade
-  LogLibrariesRoot: ${{ github.workspace }}/atc-logviewer/
-
 jobs:
   release-please:
     # WPF targets Windows, so the app must be built on a Windows runner.
@@ -33,15 +26,6 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ steps.release.outputs.tag_name }}
-          path: app
-
-      - name: 🛒 Checkout atc-logviewer (log libraries)
-        if: ${{ steps.release.outputs.release_created }}
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: atc-net/atc-logviewer
-          ref: ${{ env.LOG_LIBRARIES_REF }}
-          path: atc-logviewer
 
       - name: ⚙️ Setup .NET
         if: ${{ steps.release.outputs.release_created }}
@@ -51,15 +35,12 @@ jobs:
 
       - name: 🧹 Clean
         if: ${{ steps.release.outputs.release_created }}
-        working-directory: app
         run: dotnet clean AtcSoft.Log.Viewer.slnx -c Release && dotnet nuget locals all --clear
 
       - name: 🔁 Restore packages
         if: ${{ steps.release.outputs.release_created }}
-        working-directory: app
         run: dotnet restore AtcSoft.Log.Viewer.slnx
 
       - name: 🛠️ Build solution
         if: ${{ steps.release.outputs.release_created }}
-        working-directory: app
         run: dotnet build AtcSoft.Log.Viewer.slnx -c Release --no-restore /p:UseSourceLink=true

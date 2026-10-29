@@ -2,7 +2,7 @@
 
 ATC Log Viewer is a free, open source Windows app for viewing log files from log4net, NLog and Serilog. It tails files live, filters, highlights and shows charts.
 
-The parsing is done by the [Atc.LogCollector and Atc.LogAnalyzer](https://github.com/atc-net/atc-logviewer) libraries.
+The parsing is done by the `Atc.LogFiles.Collector` and `Atc.LogFiles.Analyzer` libraries in this repo (moved here from the retired `atc-net/atc-logviewer`).
 
 ## Features
 
@@ -167,15 +167,6 @@ Earlier versions stored them machine-wide in `%ProgramData%\ATC\atc-logviewer`. 
 
 Requirements: Windows and the .NET 10 SDK.
 
-Until `Atc.LogCollector` and `Atc.LogAnalyzer` are on nuget.org, the app builds them from a clone of [atc-net/atc-logviewer](https://github.com/atc-net/atc-logviewer) next to this repo:
-
-```text
-<folder>/atc-net/atc-logviewer
-<folder>/atc-net-apps/atc-soft-log-viewer
-```
-
-Another location can be given with `-p:LogLibrariesRoot=<path>/`.
-
 ```powershell
 dotnet build AtcSoft.Log.Viewer.slnx -c Release
 dotnet test --solution AtcSoft.Log.Viewer.slnx -c Release
@@ -190,3 +181,8 @@ dotnet run --project src/AtcSoft.Log.Viewer.Wpf.App -c Release
 | `src/AtcSoft.Log.Viewer.Wpf` | The WPF front end: views and view models |
 | `src/AtcSoft.Log.Viewer.Wpf.App` | The exe: starts the app and shows the main window |
 | `test/AtcSoft.Log.Viewer.Tests` | Tests for the core |
+| `src/Atc.LogFiles.Collector` | Reads and tails log4net, NLog and Serilog files (pure C#, no reference to the app) |
+| `src/Atc.LogFiles.Analyzer` | Filters, counts, highlight matching and timeline buckets (pure C#, no reference to the app) |
+| `test/Atc.LogFiles.*.Tests` | Tests for the libraries and the sample generator |
+| `tool/Atc.LogFiles.SampleGenerator` | Writes big sample log files for testing, see its [README](tool/Atc.LogFiles.SampleGenerator/README.md) |
+| `benchmark/Atc.LogFiles.Benchmarks` | BenchmarkDotNet benchmarks for collecting and filtering |
