@@ -426,3 +426,9 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+# Temporary local packages of Atc.LogCollector and Atc.LogAnalyzer (build/pack-local-libraries.ps1)
+local-packages/
+
+# Test results
+TestResults/

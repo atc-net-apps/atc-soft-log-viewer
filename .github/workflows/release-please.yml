@@ -1,0 +1,46 @@
+name: release-please
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release-please:
+    # WPF targets Windows, so the app must be built on a Windows runner.
+    # A release builds the app; release assets (portable zip, MSI) come later (LV-20, LV-21).
+    runs-on: windows-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: release-please
+        id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_PAT }}
+
+      - name: 🛒 Checkout repository
+        if: ${{ steps.release.outputs.release_created }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ steps.release.outputs.tag_name }}
+
+      - name: ⚙️ Setup .NET
+        if: ${{ steps.release.outputs.release_created }}
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: 🧹 Clean
+        if: ${{ steps.release.outputs.release_created }}
+        run: dotnet clean AtcSoft.Log.Viewer.slnx -c Release && dotnet nuget locals all --clear
+
+      - name: 🔁 Restore packages
+        if: ${{ steps.release.outputs.release_created }}
+        run: dotnet restore AtcSoft.Log.Viewer.slnx
+
+      - name: 🛠️ Build solution
+        if: ${{ steps.release.outputs.release_created }}
+        run: dotnet build AtcSoft.Log.Viewer.slnx -c Release --no-restore /p:UseSourceLink=true
