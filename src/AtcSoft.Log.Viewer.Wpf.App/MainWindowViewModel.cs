@@ -374,7 +374,7 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
             return;
         }
 
-        AddEntries(CreateLogEntriesEx(batch.Entries, CreateHighlightRules(), GetDefaultForeground()));
+        AddEntries(CreateLogEntriesEx(batch.Entries, CreateHighlighting()));
         RefreshSourceSystems();
         CountLogEntriesStatsAndSend();
     }
@@ -447,11 +447,10 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
 
         // Set the filter on the UI thread, so filters are applied in the order they are requested
         var result = logAnalyzer.ApplyFilter(CreateLogFilter());
-        var highlightRules = CreateHighlightRules();
-        var defaultForeground = GetDefaultForeground();
+        var highlighting = CreateHighlighting();
 
         var entries = await Task
-            .Run(() => CreateLogEntriesEx(result.Entries, highlightRules, defaultForeground))
+            .Run(() => CreateLogEntriesEx(result.Entries, highlighting))
             .ConfigureAwait(continueOnCapturedContext: true);
 
         if (requestId != filterRequestId)
@@ -472,7 +471,7 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
         {
             if (batch.FilterVersion == displayedFilterVersion)
             {
-                AddEntries(CreateLogEntriesEx(batch.Entries, highlightRules, defaultForeground));
+                AddEntries(CreateLogEntriesEx(batch.Entries, highlighting));
             }
         }
 
@@ -484,49 +483,34 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
         IsBusy = false;
     }
 
-    private static Brush GetDefaultForeground()
-        => ThemeManagerHelper.GetBrushByResourceKey(AtcAppsBrushKeyType.ThemeForeground);
-
-    private List<HighlightRule> CreateHighlightRules()
-        => ProfileViewModel.Highlights
-            .Select(CreateHighlightRule)
-            .ToList();
-
-    private static HighlightRule CreateHighlightRule(
-        HighlightViewModel highlight)
+    private Highlighting CreateHighlighting()
     {
-        var comparison = highlight.IgnoreCasing
-            ? StringComparison.OrdinalIgnoreCase
-            : StringComparison.Ordinal;
-
-        return new HighlightRule(
-            highlight.Text,
-            comparison,
-            highlight.Foreground,
-            highlight.Background);
+        var highlights = ProfileViewModel.Highlights;
+        return new Highlighting(
+            new HighlightMatcher(
+                highlights
+                    .Select(x => new HighlightRule(x.Text, x.IgnoreCasing))
+                    .ToList()),
+            highlights
+                .Select(x => (Foreground: (Brush)x.Foreground, Background: (Brush)x.Background))
+                .ToList(),
+            ThemeManagerHelper.GetBrushByResourceKey(AtcAppsBrushKeyType.ThemeForeground));
     }
 
     private static List<AtcLogEntryEx> CreateLogEntriesEx(
         IReadOnlyList<AtcLogEntry> logEntries,
-        IReadOnlyList<HighlightRule> highlightRules,
-        Brush defaultForeground)
+        Highlighting highlighting)
     {
         var result = new List<AtcLogEntryEx>(logEntries.Count);
         foreach (var logEntry in logEntries)
         {
-            var foreground = defaultForeground;
+            var foreground = highlighting.DefaultForeground;
             Brush background = Brushes.Transparent;
 
-            foreach (var rule in highlightRules)
+            var ruleIndex = highlighting.Matcher.FindMatch(logEntry);
+            if (ruleIndex != HighlightMatcher.NoMatch)
             {
-                if (!logEntry.MessageFull.Contains(rule.Text, rule.Comparison))
-                {
-                    continue;
-                }
-
-                foreground = rule.Foreground;
-                background = rule.Background;
-                break;
+                (foreground, background) = highlighting.Brushes[ruleIndex];
             }
 
             result.Add(new AtcLogEntryEx(
@@ -544,9 +528,11 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
         return result;
     }
 
-    private sealed record HighlightRule(
-        string Text,
-        StringComparison Comparison,
-        Brush Foreground,
-        Brush Background);
+    /// <summary>
+    /// The highlight rules of the profile, and the brushes to use for each rule (same order).
+    /// </summary>
+    private sealed record Highlighting(
+        HighlightMatcher Matcher,
+        IReadOnlyList<(Brush Foreground, Brush Background)> Brushes,
+        Brush DefaultForeground);
 }
