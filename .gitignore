@@ -438,3 +438,6 @@ TestResults/
 
 # Big sample log files made by tool/Atc.LogFiles.SampleGenerator
 sample/*.log
+
+# Log files written by sample/Atc.LogFiles.Simulator
+sample/output/

@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log Simulator</title>
+  <style>
+    :root {
+      --bg: #f6f7f9; --panel: #ffffff; --text: #1d2330; --muted: #5d6677; --border: #d9dde5;
+      --accent: #2563eb; --accent-text: #ffffff; --danger: #c62828; --ok: #2e7d32; --code: #eef1f6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #12151b; --panel: #1b2029; --text: #e6e9ef; --muted: #9aa3b2; --border: #2c3340;
+        --accent: #5b8def; --accent-text: #0b0d12; --danger: #ef6b6b; --ok: #6cc070; --code: #232a35;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 14px/1.45 system-ui, sans-serif; background: var(--bg); color: var(--text); }
+    header { padding: 16px; border-bottom: 1px solid var(--border); background: var(--panel); }
+    header h1 { margin: 0 0 4px; font-size: 20px; }
+    header p { margin: 0; color: var(--muted); }
+    main { display: grid; gap: 16px; padding: 16px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); max-width: 1200px; margin: 0 auto; }
+    section { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 16px; min-width: 0; }
+    h2 { margin: 0 0 12px; font-size: 15px; }
+    label { display: grid; grid-template-columns: 1fr 140px; align-items: center; gap: 8px; margin-bottom: 8px; }
+    input, select { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; }
+    button { padding: 7px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; cursor: pointer; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+    button.danger { color: var(--danger); }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+    .folder { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+    .folder code { flex: 1; min-width: 0; overflow-wrap: anywhere; background: var(--code); padding: 6px 8px; border-radius: 6px; }
+    .status { font-weight: 600; }
+    .status.on { color: var(--ok); }
+    table { width: 100%; border-collapse: collapse; }
+    td, th { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+    td.num, th.num { text-align: right; }
+    ul { list-style: none; margin: 0; padding: 0; max-height: 320px; overflow: auto; }
+    li { padding: 3px 0; border-bottom: 1px solid var(--border); }
+    li.error { color: var(--danger); }
+    .muted { color: var(--muted); }
+    .hint { color: var(--muted); font-size: 13px; margin: 4px 0 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Log Simulator</h1>
+    <p>Writes log files like a running system, so you can watch ATC Log Viewer follow them. Open the folder below in the viewer.</p>
+    <div class="folder"><code id="folder">…</code><button id="copy">Copy path</button></div>
+  </header>
+
+  <main>
+    <section>
+      <h2>Writing <span id="status" class="status">stopped</span></h2>
+      <div class="row">
+        <button class="primary" id="start">Start</button>
+        <button id="stop">Stop</button>
+      </div>
+      <label>Format
+        <select id="format">
+          <option value="Serilog">Serilog</option>
+          <option value="NLog">NLog</option>
+          <option value="Log4Net">log4net</option>
+        </select>
+      </label>
+      <label>Entries per second <input id="linesPerSecond" type="number" min="0" max="10000"></label>
+      <label>Files (services) <input id="fileCount" type="number" min="1" max="8"></label>
+      <label>Errors % <input id="errorPercent" type="number" min="0" max="100"></label>
+      <label>Errors with stack trace % <input id="stackTracePercent" type="number" min="0" max="100"></label>
+      <p class="hint">Changes apply right away. <span id="written" class="muted"></span></p>
+    </section>
+
+    <section>
+      <h2>Rolling</h2>
+      <label>Roll mode
+        <select id="rollMode">
+          <option value="Rename">Rename (log4net): orders.log → orders.log.1</option>
+          <option value="NewFile">New file (Serilog, NLog): orders-&lt;time&gt;.log</option>
+          <option value="CopyTruncate">Copy and truncate</option>
+        </select>
+      </label>
+      <label>Roll at size (KB, 0 = off) <input id="rollSizeKb" type="number" min="0"></label>
+      <div class="row"><button id="roll">Roll all files now</button></div>
+      <h2>Load and edge cases</h2>
+      <div class="row">
+        <button data-burst="1000">Burst 1,000</button>
+        <button data-burst="10000">Burst 10,000</button>
+        <button data-burst="100000">Burst 100,000</button>
+      </div>
+      <div class="row">
+        <button id="emptyFile">New empty file (first line after 3 s)</button>
+      </div>
+      <div class="row"><button class="danger" id="deleteAll">Delete all files</button></div>
+    </section>
+
+    <section>
+      <h2>Files</h2>
+      <table>
+        <thead><tr><th>Name</th><th class="num">Size</th><th>Changed</th><th></th></tr></thead>
+        <tbody id="files"></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>What happened</h2>
+      <ul id="events"></ul>
+    </section>
+  </main>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const settingIds = ['format', 'linesPerSecond', 'fileCount', 'errorPercent', 'stackTracePercent', 'rollMode', 'rollSizeKb'];
+    let editing = false;
+
+    async function call(method, url, body) {
+      const response = await fetch(url, {
+        method,
+        headers: body ? { 'Content-Type': 'application/json' } : undefined,
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      render(await response.json());
+    }
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+    }
+
+    function render(state) {
+      $('folder').textContent = state.folder;
+      $('status').textContent = state.isRunning ? 'running' : 'stopped';
+      $('status').className = 'status' + (state.isRunning ? ' on' : '');
+      $('written').textContent = state.entriesWritten.toLocaleString() + ' entries written.';
+
+      if (!editing) {
+        for (const id of settingIds) {
+          $(id).value = state.settings[id];
+        }
+      }
+
+      const files = $('files');
+      files.replaceChildren(...state.files.map(f => {
+        const tr = document.createElement('tr');
+        const name = document.createElement('td');
+        name.textContent = f.name;
+        const size = document.createElement('td');
+        size.className = 'num';
+        size.textContent = formatSize(f.sizeBytes);
+        const changed = document.createElement('td');
+        changed.textContent = new Date(f.lastWriteTime).toLocaleTimeString();
+        const actions = document.createElement('td');
+        const del = document.createElement('button');
+        del.className = 'danger';
+        del.textContent = 'Delete';
+        del.onclick = () => call('POST', '/api/files/' + encodeURIComponent(f.name) + '/delete');
+        actions.append(del);
+        tr.append(name, size, changed, actions);
+        return tr;
+      }));
+
+      $('events').replaceChildren(...state.events.map(e => {
+        const li = document.createElement('li');
+        li.className = e.isError ? 'error' : '';
+        li.textContent = new Date(e.time).toLocaleTimeString() + '  ' + e.text;
+        return li;
+      }));
+    }
+
+    function readSettings() {
+      const settings = {};
+      for (const id of settingIds) {
+        const value = $(id).value;
+        settings[id] = $(id).type === 'number' ? Number(value) : value;
+      }
+      return settings;
+    }
+
+    for (const id of settingIds) {
+      $(id).addEventListener('focus', () => editing = true);
+      $(id).addEventListener('blur', () => editing = false);
+      $(id).addEventListener('change', () => call('PUT', '/api/settings', readSettings()));
+    }
+
+    $('start').onclick = () => call('POST', '/api/start');
+    $('stop').onclick = () => call('POST', '/api/stop');
+    $('roll').onclick = () => call('POST', '/api/roll');
+    $('emptyFile').onclick = () => call('POST', '/api/empty-file');
+    $('deleteAll').onclick = () => call('POST', '/api/files/delete-all');
+    for (const button of document.querySelectorAll('[data-burst]')) {
+      button.onclick = () => call('POST', '/api/burst/' + button.dataset.burst);
+    }
+    $('copy').onclick = () => navigator.clipboard.writeText($('folder').textContent);
+
+    call('GET', '/api/state');
+    setInterval(() => call('GET', '/api/state'), 1000);
+  </script>
+</body>
+</html>
