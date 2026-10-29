@@ -20,6 +20,11 @@ internal sealed class ViewerRun : IDisposable
     /// </summary>
     public const string ShownCountId = "ShownCount";
 
+    /// <summary>
+    /// The list of log entries.
+    /// </summary>
+    public const string LogEntriesId = "LogEntries";
+
     private readonly ChildProcess process;
 
     public ViewerRun(
@@ -104,6 +109,18 @@ internal sealed class ViewerRun : IDisposable
         while (DateTime.UtcNow < deadline);
 
         throw App.Fail($"The status bar count '{automationId}' is {count:N0}, not {expected:N0}, after {timeout.TotalSeconds:N0} s.");
+    }
+
+    /// <summary>
+    /// Reads how far down the list is scrolled.
+    /// </summary>
+    /// <returns>0 at the top, 100 at the bottom; 100 when there is nothing to scroll.</returns>
+    public double ReadListScrollPercent()
+    {
+        var scroll = App.FindById(Main, LogEntriesId).Patterns.Scroll.Pattern;
+        return scroll.VerticallyScrollable.ValueOrDefault
+            ? scroll.VerticalScrollPercent.ValueOrDefault
+            : 100;
     }
 
     public void Dispose()

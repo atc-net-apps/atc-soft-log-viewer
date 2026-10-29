@@ -137,19 +137,25 @@ public sealed class LiveFolderTests
             await Task.Delay(100, cancellationToken);
         }
 
+        var scrollDuringFlow = run.ReadListScrollPercent();
         simulator.Stop();
         var written = simulator.GetState().EntriesWritten;
         var count = run.WaitForCount(ViewerRun.CollectedCountId, written, CountTimeout);
+        DesktopApp.Settle(TimeSpan.FromSeconds(1));
+        var scrollAfterFlow = run.ReadListScrollPercent();
 
         times.Sort();
         var median = times[times.Count / 2];
         var slowest = times[^1];
         TestContext.Current.TestOutputHelper?.WriteLine(
             $"{written - 1_000:N0} entries in 10 s: {times.Count} reads of the status bar, median {median.TotalMilliseconds:N0} ms, slowest {slowest.TotalMilliseconds:N0} ms " +
-            $"(idle: median {idle[idle.Count / 2].TotalMilliseconds:N0} ms); count {count:N0}.");
+            $"(idle: median {idle[idle.Count / 2].TotalMilliseconds:N0} ms); count {count:N0}; " +
+            $"list scrolled to {scrollDuringFlow:N1} % during the flow, {scrollAfterFlow:N1} % after.");
 
         count.Should().Be(written, "every entry written is counted once");
         slowest.Should().BeLessThan(TimeSpan.FromSeconds(2), "the window must keep answering while entries arrive");
+        scrollDuringFlow.Should().BeGreaterThan(90, "auto-scroll keeps the list near the newest entries while they arrive");
+        scrollAfterFlow.Should().BeGreaterThan(99.9, "auto-scroll ends at the newest entry");
         run.App.ShouldNotHaveCrashed();
     }
 

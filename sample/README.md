@@ -15,8 +15,8 @@ dotnet run --project sample/AtcSoft.Log.Viewer.Sample.AppHost
 
 1. The Aspire dashboard opens. Click the `log-simulator` endpoint to open the simulator page.
 2. ATC Log Viewer opens as `log-viewer`. The first start can take a while, because Aspire builds it with `dotnet run`.
-3. In the viewer, open the folder shown at the top of the simulator page (**Copy path**), which is `sample/output`.
-4. Press **Start** on the simulator page, then try the buttons and watch the viewer.
+3. Press **Start** on the simulator page, so the folder has log files.
+4. In the viewer, open the folder shown at the top of the simulator page (**Copy path**), which is `sample/output`. Then try the buttons and watch the viewer.
 
 To run the simulator alone: `dotnet run --project sample/Atc.LogFiles.Simulator`. It then writes to `%TEMP%\atc-log-simulator`, or to the folder in the `Simulator__Folder` environment variable.
 

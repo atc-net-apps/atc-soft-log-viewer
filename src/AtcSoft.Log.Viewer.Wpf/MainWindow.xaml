@@ -279,6 +279,7 @@
                             Visibility="{Binding Path=ViewMode, ConverterParameter={x:Static app:ViewMode.ListView}, Converter={StaticResource ViewModeVisibilityConverter}, FallbackValue=Collapsed}">
                             <ListView
                                 Grid.Row="0"
+                                AutomationProperties.AutomationId="LogEntries"
                                 AlternationCount="0"
                                 ContextMenuOpening="OnContextMenuOpening"
                                 FontFamily="Modern"
