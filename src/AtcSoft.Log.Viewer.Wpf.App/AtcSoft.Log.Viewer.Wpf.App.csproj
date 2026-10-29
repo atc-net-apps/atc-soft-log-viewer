@@ -51,8 +51,8 @@
 
   <!-- See "Log libraries" in Directory.Build.props -->
   <ItemGroup Condition="'$(UseLogLibraryProjects)' == 'true'">
-    <ProjectReference Include="$(LogLibrariesRoot)src\Atc.LogAnalyzer\Atc.LogAnalyzer.csproj" />
-    <ProjectReference Include="$(LogLibrariesRoot)src\Atc.LogCollector\Atc.LogCollector.csproj" />
+    <ProjectReference Include="$(LogLibrariesRoot)src\Atc.LogAnalyzer\Atc.LogAnalyzer.csproj" AdditionalProperties="ShouldUnsetParentConfigurationAndPlatform=false" />
+    <ProjectReference Include="$(LogLibrariesRoot)src\Atc.LogCollector\Atc.LogCollector.csproj" AdditionalProperties="ShouldUnsetParentConfigurationAndPlatform=false" />
   </ItemGroup>
   <ItemGroup Condition="'$(UseLogLibraryProjects)' != 'true'">
     <PackageReference Include="Atc.LogAnalyzer" Version="$(LogLibrariesVersion)" />

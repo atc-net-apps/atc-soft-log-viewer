@@ -36,6 +36,8 @@
     <UseLogLibraryProjects Condition="'$(UseLogLibraryProjects)' == ''">true</UseLogLibraryProjects>
     <LogLibrariesRoot Condition="'$(LogLibrariesRoot)' == ''">$(MSBuildThisFileDirectory)..\..\atc-net\atc-logviewer\</LogLibrariesRoot>
     <LogLibrariesVersion>1.0.0</LogLibrariesVersion>
+    <!-- The library projects are not in the solution: build them with the same configuration (Release/Debug) as the app -->
+    <ShouldUnsetParentConfigurationAndPlatform Condition="'$(UseLogLibraryProjects)' == 'true'">false</ShouldUnsetParentConfigurationAndPlatform>
   </PropertyGroup>
 
   <PropertyGroup Label="Compile settings">
