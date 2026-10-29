@@ -196,7 +196,11 @@ public partial class App
         Exception? error = null;
         try
         {
-            LegacyDataMigrator.CopyIfNeeded(AppDataPaths.LegacyRoot, WpfApp.DataPaths.Root);
+            if (!WpfApp.DataPaths.IsOverridden)
+            {
+                LegacyDataMigrator.CopyIfNeeded(AppDataPaths.LegacyRoot, WpfApp.DataPaths.Root);
+            }
+
             WpfApp.DataPaths.EnsureCreated();
         }
         catch (IOException ex)

@@ -10,8 +10,9 @@ public static class WpfApp
 
     /// <summary>
     /// Gets the per-user data folder: profiles, recent files and custom application settings.
+    /// The environment variable <see cref="AppDataPaths.DataPathVariable"/> moves it.
     /// </summary>
-    public static AppDataPaths DataPaths { get; } = AppDataPaths.ForCurrentUser();
+    public static AppDataPaths DataPaths { get; } = AppDataPaths.FromEnvironment();
 
     public static JsonSerializerOptions JsonSerializerOptions
     {

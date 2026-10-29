@@ -18,9 +18,9 @@
         ToolTip="All counts">
         <StackPanel Orientation="Horizontal">
             <TextBlock Margin="10,0" Text="All:" />
-            <TextBlock Text="{Binding Path=LogEntriesStats.Count, StringFormat=N0, FallbackValue=0}" />
+            <TextBlock AutomationProperties.AutomationId="CollectedCount" Text="{Binding Path=LogEntriesStats.Count, StringFormat=N0, FallbackValue=0}" />
             <TextBlock Margin="10,0" Text="/" />
-            <TextBlock Text="{Binding Path=LogEntriesStats.TotalCount, StringFormat=N0, FallbackValue=0}" />
+            <TextBlock AutomationProperties.AutomationId="ShownCount" Text="{Binding Path=LogEntriesStats.TotalCount, StringFormat=N0, FallbackValue=0}" />
         </StackPanel>
     </fluent:StatusBarItem>
 
