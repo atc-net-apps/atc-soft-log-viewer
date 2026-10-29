@@ -11,6 +11,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Atc.LogFiles.Simulator\Atc.LogFiles.Simulator.csproj" />
+    <!-- Build the viewer with the AppHost, so F5 starts the latest code. It targets Windows, so it is
+         built only, not referenced, and Program.cs adds it by path. -->
+    <ProjectReference Include="..\..\src\AtcSoft.Log.Viewer.Wpf.App\AtcSoft.Log.Viewer.Wpf.App.csproj"
+                      ReferenceOutputAssembly="false"
+                      SkipGetTargetFrameworkProperties="true"
+                      IsAspireProjectResource="false" />
   </ItemGroup>
 
 </Project>
