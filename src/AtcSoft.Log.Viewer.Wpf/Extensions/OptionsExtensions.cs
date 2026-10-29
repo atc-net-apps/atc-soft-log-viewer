@@ -16,20 +16,6 @@ public static class OptionsExtensions
         };
     }
 
-    public static ObservableCollectionEx<HighlightViewModel> ToViewModels(
-        this IList<HighlightOptions> highlightsOptions)
-    {
-        ArgumentNullException.ThrowIfNull(highlightsOptions);
-
-        var list = new ObservableCollectionEx<HighlightViewModel>();
-        foreach (var highlightsOption in highlightsOptions)
-        {
-            list.Add(highlightsOption.ToViewModel());
-        }
-
-        return list;
-    }
-
     public static ProfileViewModel ToViewModel(
         this ProfileOptions profileOptions)
     {
@@ -43,5 +29,19 @@ public static class OptionsExtensions
             Highlights = profileOptions.Highlights.ToViewModels(),
             CollectorConfiguration = profileOptions.CollectorConfiguration,
         };
+    }
+
+    public static ObservableCollectionEx<HighlightViewModel> ToViewModels(
+        this IList<HighlightOptions> highlightsOptions)
+    {
+        ArgumentNullException.ThrowIfNull(highlightsOptions);
+
+        var list = new ObservableCollectionEx<HighlightViewModel>();
+        foreach (var highlightsOption in highlightsOptions)
+        {
+            list.Add(highlightsOption.ToViewModel());
+        }
+
+        return list;
     }
 }
