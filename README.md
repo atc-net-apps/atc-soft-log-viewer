@@ -2,7 +2,7 @@
 
 ATC Log Viewer is a free, open source Windows app for viewing log files from log4net, NLog and Serilog. It tails files live, filters, highlights and shows charts.
 
-The parsing is done by the `Atc.LogFiles.Collector` and `Atc.LogFiles.Analyzer` libraries in this repo (moved here from the retired `atc-net/atc-logviewer`).
+The parsing is done by the `Atc.LogFiles.Collector` and `Atc.LogFiles.Analyzer` libraries in this repo (moved here from the retired `atc-net/atc-logviewer`). See [how to use them](docs/log-files-libraries.md).
 
 ## Features
 
