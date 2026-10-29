@@ -10,7 +10,7 @@ public partial class MainWindowViewModel
 {
     private void LoadRecentOpenFiles()
     {
-        var recentOpenFileViewModels = RecentOpenFileHelper.Load(App.LogViewerProgramDataRecentProfilesDirectory);
+        var recentOpenFileViewModels = RecentOpenFileHelper.Load(App.DataPaths.Root);
 
         RecentOpenFiles.Clear();
         RecentOpenFiles.SuppressOnChangedNotification = true;
@@ -20,7 +20,7 @@ public partial class MainWindowViewModel
 
     private void AddLoadedProfileFileToRecentOpenFiles(FileInfo file)
     {
-        RecentOpenFiles.Add(new RecentOpenFileViewModel(App.LogViewerProgramDataRecentProfilesDirectory, DateTime.Now, file.FullName));
+        RecentOpenFiles.Add(new RecentOpenFileViewModel(App.DataPaths.Root, DateTime.Now, file.FullName));
 
         var recentOpenFilesOption = new RecentOpenFilesOption();
         foreach (var vm in RecentOpenFiles.OrderByDescending(x => x.TimeStamp))
@@ -44,10 +44,10 @@ public partial class MainWindowViewModel
             recentOpenFilesOption.RecentOpenFiles.Add(item);
         }
 
-        var recentOpenFilesFilePath = Path.Combine(App.LogViewerProgramDataRecentProfilesDirectory.FullName, AtcFileNameConstants.RecentOpenFilesFileName);
-        if (!Directory.Exists(App.LogViewerProgramDataProfilesDirectory.FullName))
+        var recentOpenFilesFilePath = Path.Combine(App.DataPaths.Root.FullName, AtcFileNameConstants.RecentOpenFilesFileName);
+        if (!Directory.Exists(App.DataPaths.ProfilesDirectory.FullName))
         {
-            Directory.CreateDirectory(App.LogViewerProgramDataRecentProfilesDirectory.FullName);
+            Directory.CreateDirectory(App.DataPaths.Root.FullName);
         }
 
         var json = JsonSerializer.Serialize(recentOpenFilesOption, App.JsonSerializerOptions);

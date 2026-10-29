@@ -11,5 +11,9 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/AtcSoft.Log.Viewer.Wpf.App/AtcSoft.Log.Viewer.Wpf.App.csproj" />
+    <Project Path="src/AtcSoft.Log.Viewer/AtcSoft.Log.Viewer.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/AtcSoft.Log.Viewer.Tests/AtcSoft.Log.Viewer.Tests.csproj" />
   </Folder>
 </Solution>

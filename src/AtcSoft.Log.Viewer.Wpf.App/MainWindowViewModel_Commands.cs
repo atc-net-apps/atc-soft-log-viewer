@@ -69,7 +69,7 @@ public partial class MainWindowViewModel
     {
         var openFileDialog = new OpenFileDialog
         {
-            InitialDirectory = App.LogViewerProgramDataProfilesDirectory.FullName,
+            InitialDirectory = App.DataPaths.ProfilesDirectory.FullName,
             Multiselect = false,
             Title = "Select a profile file",
             Filter = "Profile Files|*.json",
@@ -112,7 +112,7 @@ public partial class MainWindowViewModel
 
         var fileName = DialogBoxExtractor.ExtractProfileFileName(dialogBox);
 
-        var file = new FileInfo(Path.Combine(App.LogViewerProgramDataProfilesDirectory.FullName, fileName));
+        var file = new FileInfo(Path.Combine(App.DataPaths.ProfilesDirectory.FullName, fileName));
         if (file.Exists)
         {
             var overrideDialogBox = new QuestionDialogBox(
@@ -226,7 +226,7 @@ public partial class MainWindowViewModel
 
         ApplicationOptions = vm.ApplicationSettings.Clone();
         var applicationOptionsAsJson = vm.ToJson();
-        var customAppSettingsFile = new FileInfo(Path.Combine(App.LogViewerCommonApplicationDataDirectory.FullName, AtcFileNameConstants.AppSettingsCustom));
+        var customAppSettingsFile = App.DataPaths.CustomAppSettingsFile;
         FileHelper.WriteAllText(customAppSettingsFile, applicationOptionsAsJson);
     }
 

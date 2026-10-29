@@ -13,14 +13,10 @@ public partial class App
     [SuppressMessage("Minor Code Smell", "S1075:URIs should not be hardcoded", Justification = "OK.")]
     public static readonly BitmapImage DefaultIcon = new(new Uri("pack://application:,,,/Resources/AppIcon.ico", UriKind.Absolute));
 
-    public static DirectoryInfo LogViewerCommonApplicationDataDirectory
-        => new(Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "ATC"), "atc-logviewer"));
-
-    public static DirectoryInfo LogViewerProgramDataRecentProfilesDirectory
-        => LogViewerCommonApplicationDataDirectory;
-
-    public static DirectoryInfo LogViewerProgramDataProfilesDirectory
-        => new(Path.Combine(LogViewerCommonApplicationDataDirectory.FullName, "Profiles"));
+    /// <summary>
+    /// Gets the per-user data folder: profiles, recent files and custom application settings.
+    /// </summary>
+    public static AppDataPaths DataPaths { get; } = AppDataPaths.ForCurrentUser();
 
     public static JsonSerializerOptions JsonSerializerOptions
     {
@@ -38,6 +34,7 @@ public partial class App
     /// </summary>
     public App()
     {
+        var legacyDataCopyError = CopyLegacyDataIfNeeded();
         RestoreInstallerCustomAppSettingsIfNeeded();
 
         host = Host.CreateDefaultBuilder()
@@ -83,6 +80,11 @@ public partial class App
             .Build();
 
         logger = host.Services.GetService<ILoggerFactory>()!.CreateLogger<App>();
+
+        if (legacyDataCopyError is not null)
+        {
+            logger.LogError(legacyDataCopyError, "Could not copy the data of an earlier version from {LegacyRoot}", AppDataPaths.LegacyRoot.FullName);
+        }
     }
 
     /// <summary>
@@ -180,16 +182,6 @@ public partial class App
 
         ThemeManagerHelper.SetThemeAndAccent(Current, applicationOptions.Theme);
 
-        if (!Directory.Exists(LogViewerCommonApplicationDataDirectory.FullName))
-        {
-            Directory.CreateDirectory(LogViewerCommonApplicationDataDirectory.FullName);
-        }
-
-        if (!Directory.Exists(LogViewerProgramDataProfilesDirectory.FullName))
-        {
-            Directory.CreateDirectory(LogViewerProgramDataProfilesDirectory.FullName);
-        }
-
         Current.MainWindow = host
             .Services
             .GetService<MainWindow>()!;
@@ -214,10 +206,34 @@ public partial class App
         logger.LogInformation("App closed");
     }
 
+    /// <summary>
+    /// Copies the data of earlier versions from ProgramData to the per-user folder once, and creates the folders.
+    /// </summary>
+    /// <returns>The error when the copy failed; the app then starts with empty data.</returns>
+    private static Exception? CopyLegacyDataIfNeeded()
+    {
+        Exception? error = null;
+        try
+        {
+            LegacyDataMigrator.CopyIfNeeded(AppDataPaths.LegacyRoot, DataPaths.Root);
+        }
+        catch (IOException ex)
+        {
+            error = ex;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            error = ex;
+        }
+
+        DataPaths.EnsureCreated();
+        return error;
+    }
+
     private static void RestoreInstallerCustomAppSettingsIfNeeded()
     {
         var currentFile = new FileInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, AtcFileNameConstants.AppSettingsCustom));
-        var backupFile = new FileInfo(Path.Combine(LogViewerCommonApplicationDataDirectory.FullName, AtcFileNameConstants.AppSettingsCustom));
+        var backupFile = DataPaths.CustomAppSettingsFile;
         if (!currentFile.Exists ||
             !backupFile.Exists ||
             currentFile.LastWriteTime == backupFile.LastWriteTime)
