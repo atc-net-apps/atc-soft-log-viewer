@@ -53,7 +53,7 @@ public partial class App
                 services.AddSingleton<ISerilogFileExtractor, SerilogFileExtractor>();
                 services.AddSingleton<ISerilogFileCollector, SerilogFileCollector>();
 
-                services.AddSingleton<ILogAnalyzer, Atc.LogAnalyzer.LogAnalyzer>();
+                services.AddSingleton<ILogAnalyzer, Atc.LogFiles.Analyzer.LogAnalyzer>();
                 services.AddSingleton<StatusBarViewModel>();
                 services.AddSingleton<MainWindowViewModel>();
                 services.AddSingleton<MainWindow>();

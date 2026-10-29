@@ -3,10 +3,10 @@ global using System.IO;
 global using System.Windows;
 global using System.Windows.Threading;
 
-global using Atc.LogAnalyzer;
-global using Atc.LogCollector.Log4Net;
-global using Atc.LogCollector.NLog;
-global using Atc.LogCollector.Serilog;
+global using Atc.LogFiles.Analyzer;
+global using Atc.LogFiles.Collector.Log4Net;
+global using Atc.LogFiles.Collector.NLog;
+global using Atc.LogFiles.Collector.Serilog;
 global using Atc.Wpf.Data;
 global using Atc.Wpf.Options;
 global using Atc.Wpf.Theming.Helpers;

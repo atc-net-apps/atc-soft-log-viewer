@@ -15,12 +15,8 @@
     <PackageReference Include="Atc" Version="4.0.0" />
   </ItemGroup>
 
-  <!-- See "Log libraries" in Directory.Build.props -->
-  <ItemGroup Condition="'$(UseLogLibraryProjects)' == 'true'">
-    <ProjectReference Include="$(LogLibrariesRoot)src\Atc.LogCollector\Atc.LogCollector.csproj" AdditionalProperties="ShouldUnsetParentConfigurationAndPlatform=false" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(UseLogLibraryProjects)' != 'true'">
-    <PackageReference Include="Atc.LogCollector" Version="$(LogLibrariesVersion)" />
+  <ItemGroup>
+    <ProjectReference Include="..\Atc.LogFiles.Collector\Atc.LogFiles.Collector.csproj" />
   </ItemGroup>
 
 </Project>

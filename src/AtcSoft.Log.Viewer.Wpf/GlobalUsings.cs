@@ -13,8 +13,8 @@ global using System.Windows.Media.Imaging;
 
 global using Atc;
 global using Atc.Helpers;
-global using Atc.LogAnalyzer;
-global using Atc.LogCollector;
+global using Atc.LogFiles.Analyzer;
+global using Atc.LogFiles.Collector;
 global using Atc.Serialization;
 global using Atc.Wpf.Collections;
 global using Atc.Wpf.Components.Dialogs;

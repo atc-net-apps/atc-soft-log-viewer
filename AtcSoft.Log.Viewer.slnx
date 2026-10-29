@@ -9,12 +9,23 @@
     <File Path="README.md" />
     <File Path="release-please-config.json" />
   </Folder>
+  <Folder Name="/benchmark/">
+    <Project Path="benchmark/Atc.LogFiles.Benchmarks/Atc.LogFiles.Benchmarks.csproj" />
+  </Folder>
   <Folder Name="/src/">
+    <Project Path="src/Atc.LogFiles.Analyzer/Atc.LogFiles.Analyzer.csproj" />
+    <Project Path="src/Atc.LogFiles.Collector/Atc.LogFiles.Collector.csproj" />
     <Project Path="src/AtcSoft.Log.Viewer.Wpf.App/AtcSoft.Log.Viewer.Wpf.App.csproj" />
     <Project Path="src/AtcSoft.Log.Viewer.Wpf/AtcSoft.Log.Viewer.Wpf.csproj" />
     <Project Path="src/AtcSoft.Log.Viewer/AtcSoft.Log.Viewer.csproj" />
   </Folder>
   <Folder Name="/test/">
+    <Project Path="test/Atc.LogFiles.Analyzer.Tests/Atc.LogFiles.Analyzer.Tests.csproj" />
+    <Project Path="test/Atc.LogFiles.Collector.Tests/Atc.LogFiles.Collector.Tests.csproj" />
+    <Project Path="test/Atc.LogFiles.SampleGenerator.Tests/Atc.LogFiles.SampleGenerator.Tests.csproj" />
     <Project Path="test/AtcSoft.Log.Viewer.Tests/AtcSoft.Log.Viewer.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tool/">
+    <Project Path="tool/Atc.LogFiles.SampleGenerator/Atc.LogFiles.SampleGenerator.csproj" />
   </Folder>
 </Solution>
