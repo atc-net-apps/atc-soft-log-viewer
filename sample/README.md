@@ -4,7 +4,7 @@ Watch ATC Log Viewer follow log files while they are written, rolled and deleted
 
 | Project | What |
 |---|---|
-| `AtcSoft.Log.Viewer.Sample.AppHost` | Aspire AppHost: starts the simulator and the viewer, and shows both in the Aspire dashboard |
+| `AtcSoft.Log.Viewer.Sample.AppHost` | Aspire AppHost: starts the simulator and shows it in the Aspire dashboard |
 | `Atc.LogFiles.Simulator` | A small web app that writes log files to `sample/output` and has a page to control it |
 
 ## Run it
@@ -14,8 +14,9 @@ dotnet run --project sample/AtcSoft.Log.Viewer.Sample.AppHost
 ```
 
 1. The Aspire dashboard opens. Click the `log-simulator` endpoint to open the simulator page.
-2. The viewer starts too. Open the folder shown at the top of the simulator page (**Copy path**) in the viewer.
-3. Press **Start** on the simulator page, then try the buttons and watch the viewer.
+2. Start the viewer as usual (`dotnet run --project src/AtcSoft.Log.Viewer.Wpf.App`, or F5 in your IDE). Aspire isn't used for it, because it starts desktop apps without a visible window.
+3. In the viewer, open the folder shown at the top of the simulator page (**Copy path**), which is `sample/output`.
+4. Press **Start** on the simulator page, then try the buttons and watch the viewer.
 
 To run the simulator alone: `dotnet run --project sample/Atc.LogFiles.Simulator`. It then writes to `%TEMP%\atc-log-simulator`, or to the folder in the `Simulator__Folder` environment variable.
 
