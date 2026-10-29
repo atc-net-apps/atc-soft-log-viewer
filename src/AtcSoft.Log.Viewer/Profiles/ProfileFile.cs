@@ -35,7 +35,8 @@ public static class ProfileFile
 
         var json = JsonSerializer.Serialize(profile, SerializerOptions);
 
-        return File.WriteAllTextAsync(file.FullName, json, cancellationToken);
+        // Same helper as earlier versions used, so the file is written the same way
+        return FileHelper.WriteAllTextAsync(file, json, cancellationToken);
     }
 
     private static JsonSerializerOptions CreateSerializerOptions()

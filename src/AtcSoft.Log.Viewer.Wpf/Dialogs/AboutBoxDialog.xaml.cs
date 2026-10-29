@@ -11,11 +11,12 @@ public partial class AboutBoxDialog
 
         IconImage.Source = WpfApp.DefaultIcon;
 
+        // The version of the exe, not of this library
         VersionTextBlock.Text = Assembly
-            .GetExecutingAssembly()
+            .GetEntryAssembly()?
             .GetName()
-            .Version!
-            .ToString();
+            .Version?
+            .ToString() ?? string.Empty;
     }
 
     private void OnOk(
