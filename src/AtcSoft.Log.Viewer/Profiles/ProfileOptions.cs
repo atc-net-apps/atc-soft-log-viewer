@@ -1,5 +1,5 @@
 // ReSharper disable ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
-namespace AtcSoft.Log.Viewer.Wpf.App.Options;
+namespace AtcSoft.Log.Viewer.Profiles;
 
 public class ProfileOptions
 {

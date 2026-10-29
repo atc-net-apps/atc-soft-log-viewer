@@ -41,12 +41,13 @@ global using Atc.XamlToolkit.Diagnostics;
 global using Atc.XamlToolkit.Messaging;
 global using Atc.XamlToolkit.Mvvm;
 
+global using AtcSoft.Log.Viewer.Profiles;
+global using AtcSoft.Log.Viewer.Timeline;
 global using AtcSoft.Log.Viewer.Wpf.App.Dialogs;
 global using AtcSoft.Log.Viewer.Wpf.App.Extensions;
 global using AtcSoft.Log.Viewer.Wpf.App.Extractors;
 global using AtcSoft.Log.Viewer.Wpf.App.Factories;
 global using AtcSoft.Log.Viewer.Wpf.App.Models;
-global using AtcSoft.Log.Viewer.Wpf.App.Options;
 global using AtcSoft.Log.Viewer.Wpf.App.UserControls;
 
 global using LiveChartsCore;

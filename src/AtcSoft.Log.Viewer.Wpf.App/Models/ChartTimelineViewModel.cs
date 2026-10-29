@@ -99,32 +99,18 @@ public class ChartTimelineViewModel : ViewModelBase
 
     public void RefreshChart()
     {
-        switch (SelectedInterval)
+        if (Enum.TryParse<ChartTimelineMode>(SelectedInterval, out var mode))
         {
-            case nameof(ChartTimelineMode.Latest12Hours):
-                PopulateSeries(TimeSpan.FromHours(1), bucketCount: 12, labelFormat: "H:00");
-                break;
-            case nameof(ChartTimelineMode.Latest24Hours):
-                PopulateSeries(TimeSpan.FromHours(1), bucketCount: 24, labelFormat: "H:00");
-                break;
-            case nameof(ChartTimelineMode.Latest48Hours):
-                PopulateSeries(TimeSpan.FromHours(1), bucketCount: 48, labelFormat: "H:00");
-                break;
-            case nameof(ChartTimelineMode.Latest60Minutes):
-                PopulateSeries(TimeSpan.FromMinutes(1), bucketCount: 60, labelFormat: "HH:mm");
-                break;
+            PopulateSeries(mode.GetBuckets());
         }
     }
 
     private void RefreshCommandHandler()
         => RefreshChart();
 
-    private void PopulateSeries(
-        TimeSpan bucketSize,
-        int bucketCount,
-        string labelFormat)
+    private void PopulateSeries(TimelineBuckets buckets)
     {
-        var timeline = LogTimeline.Create(logEntries, DateTime.Now, bucketSize, bucketCount);
+        var timeline = LogTimeline.Create(logEntries, DateTime.Now, buckets.BucketSize, buckets.BucketCount);
 
         var seriesCollection = new List<StackedColumnSeries<long>>();
         foreach (var logLevel in LogLevels)
@@ -156,7 +142,7 @@ public class ChartTimelineViewModel : ViewModelBase
             {
                 LabelsRotation = -90,
                 Labels = timeline.BucketStarts
-                    .Select(x => x.ToString(labelFormat, CultureInfo.InvariantCulture))
+                    .Select(x => x.ToString(buckets.LabelFormat, CultureInfo.InvariantCulture))
                     .ToArray(),
             },
         ];

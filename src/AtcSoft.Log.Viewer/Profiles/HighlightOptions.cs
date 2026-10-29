@@ -1,4 +1,4 @@
-namespace AtcSoft.Log.Viewer.Wpf.App.Options;
+namespace AtcSoft.Log.Viewer.Profiles;
 
 public class HighlightOptions
 {

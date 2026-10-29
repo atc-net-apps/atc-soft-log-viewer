@@ -8,4 +8,8 @@
     <ProjectReference Include="..\..\src\AtcSoft.Log.Viewer\AtcSoft.Log.Viewer.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="TestData\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

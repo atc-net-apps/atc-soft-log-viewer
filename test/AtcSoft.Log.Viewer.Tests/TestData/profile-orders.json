@@ -1,0 +1,27 @@
+{
+  "Name": "Orders",
+  "LogFolder": "C:\\logs\\orders",
+  "CollectorType": "Serilog",
+  "Highlights": [
+    {
+      "Text": "timeout",
+      "IgnoreCasing": true,
+      "Foreground": "#FFFF0000",
+      "Background": "#00FFFFFF"
+    },
+    {
+      "Text": "NullReferenceException",
+      "IgnoreCasing": false,
+      "Foreground": "#FFFFFFFF",
+      "Background": "#FF8B0000"
+    }
+  ],
+  "CollectorConfiguration": {
+    "MaxDaysBack": 7,
+    "MonitorFiles": false,
+    "FileNameTerms": [
+      "orders",
+      "api"
+    ]
+  }
+}

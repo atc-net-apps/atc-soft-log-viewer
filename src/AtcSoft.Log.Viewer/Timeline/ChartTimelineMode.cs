@@ -1,4 +1,4 @@
-namespace AtcSoft.Log.Viewer.Wpf.App.Models;
+namespace AtcSoft.Log.Viewer.Timeline;
 
 public enum ChartTimelineMode
 {

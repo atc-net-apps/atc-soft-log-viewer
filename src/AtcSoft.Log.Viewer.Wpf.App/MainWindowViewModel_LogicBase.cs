@@ -64,13 +64,9 @@ public partial class MainWindowViewModel
         {
             logger.Log(LogLevel.Trace, $"Loading profile file: {file.FullName}");
 
-            var json = await File
-                .ReadAllTextAsync(file.FullName, cancellationToken)
+            var profileOptions = await ProfileFile
+                .LoadAsync(file, cancellationToken)
                 .ConfigureAwait(true);
-
-            var profileOptions = JsonSerializer.Deserialize<ProfileOptions>(
-                json,
-                App.JsonSerializerOptions) ?? throw new IOException($"Invalid format in {file}");
 
             profileFile = file;
             ProfileViewModel = profileOptions.ToViewModel();
@@ -102,14 +98,8 @@ public partial class MainWindowViewModel
         {
             logger.Log(LogLevel.Trace, $"Saving profile file: {file.FullName}");
 
-            var profileOptions = profile.ToOptions();
-
-            var profileJson = JsonSerializer.Serialize(
-                profileOptions,
-                App.JsonSerializerOptions);
-
-            await FileHelper
-                .WriteAllTextAsync(file, profileJson, cancellationToken)
+            await ProfileFile
+                .SaveAsync(file, profile.ToOptions(), cancellationToken)
                 .ConfigureAwait(continueOnCapturedContext: false);
         }
         catch (Exception ex)
