@@ -1,33 +1,60 @@
-# ATC Log Viewer
+# 📜 ATC Log Viewer
 
-ATC Log Viewer is a free, open source Windows app for viewing log files from log4net, NLog and Serilog. It tails files live, filters, highlights and shows charts.
+[![Build and test](https://img.shields.io/github/actions/workflow/status/atc-net-apps/atc-soft-log-viewer/build.yml?branch=main&label=build&logo=github&style=for-the-badge)](https://github.com/atc-net-apps/atc-soft-log-viewer/actions/workflows/build.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=for-the-badge)](LICENSE)
+[![.NET 10](https://img.shields.io/badge/.NET-10-512BD4.svg?logo=dotnet&style=for-the-badge)](https://dotnet.microsoft.com/)
+![Windows](https://img.shields.io/badge/platform-Windows-0078D4.svg?style=for-the-badge)
 
-The parsing is done by the `Atc.LogFiles.Collector` and `Atc.LogFiles.Analyzer` libraries in this repo (moved here from the retired `atc-net/atc-logviewer`). See [how to use them](docs/log-files-libraries.md).
+ATC Log Viewer (`AtcSoft.Log.Viewer`) is a free, open source Windows app for reading log files from **log4net**, **NLog** and **Serilog**. It follows files live while they are written, filters, highlights and shows charts.
 
-## Features
+> 🚚 **Moved here:** this repo replaces the retired `atc-net/atc-logviewer`. The parsing is done by the `Atc.LogFiles.Collector` and `Atc.LogFiles.Analyzer` libraries in this repo - see [how to use them](docs/log-files-libraries.md).
 
-* Log messages are displayed in real-time (Tail-files)
-* File format support:
-    * log4net
-    * NLog
-    * Serilog
-* Multi sources (files and folders)
-* Drag and drop files and folders from Windows-Explore
-* Customizable color highlighting
-* Lightweight and very fast
-* Runs as a Windows application
-* Support dark mode
-* Auto scroll
+## ✨ Features
 
+| Area | Feature | Description |
+|------|---------|-------------|
+| **Open** | 📂 **Open a log folder** | Pick a folder (`Ctrl+O`). The format (log4net, NLog or Serilog) is found by itself |
+| | 🖱️ **Drag and drop** | Drop files and folders from Windows Explorer; they are added to what is already open |
+| | 🗂️ **Profiles** | Save a log folder, format, highlights and file settings as a profile: new (`Ctrl+N`), open (`Ctrl+P`), edit, save (`Ctrl+S`) |
+| | 🕘 **Recent files** | Open the last used profile (`Ctrl+R`), or let the app open it at start |
+| | ⚙️ **File settings** | Per profile: how many days back to read, whether to follow the files, and file name terms to pick only some files |
+| **Live** | 📡 **Live tail** | New lines show up while the files are written - also when a file is rolled by rename, or truncated |
+| | 🆕 **New files** | New files that show up in the folder are picked up |
+| | 🧾 **Multi-line entries** | Stack traces and other lines that belong to one entry stay together |
+| | ⬇️ **Auto scroll** | Keep the list scrolled to the newest entry, or turn it off to read |
+| **Filter** | 🚦 **Severity** | Show or hide Trace, Debug, Info, Warning, Error and Critical |
+| | 🔍 **Text** | Show only entries whose message contains a text (press `Enter`; casing is ignored) |
+| | 📅 **Date range** | Show only entries between a **From** and a **To** time |
+| | 🏷️ **Source system** | Show only entries from one source |
+| | 🎯 **From the list** | Right-click an entry to filter on its message, or to use its time as **From** or **To** |
+| **Focus** | 🎨 **Highlights** | Color entries that contain a text: foreground, background, ignore casing - saved in the profile |
+| | 📋 **Copy** | Copy a message with `Ctrl+C` or the right-click menu |
+| | 🔎 **Details** | The full message and line number of the selected entry; JSON messages are shown in a JSON viewer |
+| **Charts** | 🥧 **Log level distribution** | Two pie charts: the shown entries and all entries |
+| | 📈 **Timeline distribution** | Entries over time per log level: the latest 60 minutes, or 12, 24 or 48 hours |
+| | 🔢 **Status bar** | Shown and total counts, in all and per log level |
+| **App** | 🌗 **Light and dark mode** | Pick the theme in **Application settings** |
+| | ℹ️ **About** | Version and credits |
 
-| Light-Mode                                                                   | Dark-Mode                                                                    |
-|------------------------------------------------------------------------------|------------------------------------------------------------------------------|
-| List mode ![Img](docs/images/lm-list.png)                                    | List mode ![Img](docs/images/dm-list.png)                                    |
-| Graph: Log Level Distribution ![Img](docs/images/lm-graph-pie.png)           | Graph: Log Level Distribution  ![Img](docs/images/dm-graph-pie.png)          |
-| Graph: Timeline Distribution ![Img](docs/images/lm-graph-bar.png)            | Graph: Timeline Distribution  ![Img](docs/images/dm-graph-bar.png)           |
+## 🖼️ Screenshots
 
+| ☀️ Light mode | 🌙 Dark mode |
+|---------------|--------------|
+| List mode ![Img](docs/images/lm-list.png) | List mode ![Img](docs/images/dm-list.png) |
+| Graph: Log Level Distribution ![Img](docs/images/lm-graph-pie.png) | Graph: Log Level Distribution ![Img](docs/images/dm-graph-pie.png) |
+| Graph: Timeline Distribution ![Img](docs/images/lm-graph-bar.png) | Graph: Timeline Distribution ![Img](docs/images/dm-graph-bar.png) |
 
-## Microsoft ILogger
+## 🧪 Try it with the log simulator
+
+The [log simulator](sample/README.md) writes log files, rolls them in three ways, writes bursts and deletes files, so you can watch the viewer keep up. An Aspire AppHost starts both the simulator and the viewer:
+
+```powershell
+dotnet run --project sample/AtcSoft.Log.Viewer.Sample.AppHost
+```
+
+Small sample files for each format are in [`sample-data/`](sample-data).
+
+## 📊 Microsoft ILogger log levels
 
 | LogLevel    | Value | Method         | Description       |
 |-------------|-------|----------------|-------------------|
@@ -39,14 +66,16 @@ The parsing is done by the `Atc.LogFiles.Collector` and `Atc.LogFiles.Analyzer` 
 | Critical    | 5     | LogCritical    | For failures that require immediate attention. Examples: data loss scenarios, out of disk space. |
 | None        | 6     |                | Specifies that no messages should be written. |
 
-## Examples on default log formats
+## 📄 Supported log formats
 
-### log4net
+The app finds the format of a file or folder by itself. These are the default layouts it reads.
+
+### 🪵 log4net
 
 * [Project page to log4net](https://logging.apache.org/log4net/)
 * [Github link to log4net](https://github.com/apache/logging-log4net)
 
-#### Supported layout formats:
+#### Supported layout
 
 ```csharp
 layout = "%date [%thread] %-5level %logger - %message%newline%exception"
@@ -75,12 +104,12 @@ layout = "%date [%thread] %-5level %logger - %message%newline%exception"
 2024-02-16 09:15:20,789 [8] INFO  Root - Application End
 ```
 
-### NLog
+### 📘 NLog
 
 * [Project page to NLog](https://nlog-project.org)
 * [Github link to NLog](https://github.com/NLog/NLog)
 
-#### Supported layout formats:
+#### Supported layout
 
 ```csharp
 layout = "${longdate} ${uppercase:${level}} ${message:withexception=true}"
@@ -109,12 +138,12 @@ layout = "${longdate} ${uppercase:${level}} ${message:withexception=true}"
 2024-02-16 09:15:20.7892 INFO Application End
 ```
 
-### Serilog
+### 📗 Serilog
 
 * [Project page to Serilog](https://serilog.net)
 * [Github link to Serilog](https://github.com/serilog/serilog)
 
-#### Supported layout formats:
+#### Supported layout
 
 ```csharp
 layout = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message}{NewLine}{Exception}"
@@ -143,9 +172,9 @@ layout = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message}{NewLine
 2024-02-16 09:15:20.789 [INF] Application End
 ```
 
-#### LogLevel mapping between Serilog and Ilogger
+#### LogLevel mapping between Serilog and ILogger
 
-| Ilogger        |  Serilog      |
+| ILogger        |  Serilog      |
 |----------------|---------------|
 | ***Trace***    | ***Verbose*** |
 | Debug          | Debug         |
@@ -155,15 +184,17 @@ layout = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message}{NewLine
 | ***Critical*** | ***Fatal***   |
 | *None*         | *None*        |
 
-> Note: Log-level `Trace` vs `Verbose` and `Critical` vs `Fatal`.
+> 💡 Note: Log-level `Trace` vs `Verbose` and `Critical` vs `Fatal`.
 
-## Where the app keeps its data
+## 💾 Where the app keeps its data
 
 Profiles, recent files and custom application settings are stored per user in `%LOCALAPPDATA%\AtcSoft\AtcSoft.Log.Viewer`.
 
+Set the environment variable `ATCSOFT_LOGVIEWER_DATA_PATH` to use another folder.
+
 Earlier versions stored them machine-wide in `%ProgramData%\ATC\atc-logviewer`. On first start, that folder is copied to the new location once. The old folder is left as it is.
 
-## Build from source
+## 🛠️ Build and run
 
 Requirements: Windows and the .NET 10 SDK.
 
@@ -173,16 +204,35 @@ dotnet test --solution AtcSoft.Log.Viewer.slnx -c Release
 dotnet run --project src/AtcSoft.Log.Viewer.Wpf.App -c Release
 ```
 
-## Project layout
+## ✅ Tests and benchmarks
+
+* 🧪 **Unit tests** for the libraries, the app core, the sample generator and the simulator run with `dotnet test` (see above).
+* 🖥️ **UI tests** that drive the real app exist and are turned on with `ATCSOFT_E2E=1` - see [UI tests](docs/e2e-tests.md).
+* ⚡ **Benchmarks** for collecting and filtering are in `benchmark/Atc.LogFiles.Benchmarks` (BenchmarkDotNet).
+* 🏭 **Big sample files** for load testing are written by the [sample generator](tool/Atc.LogFiles.SampleGenerator/README.md).
+
+## 🏗️ Project layout
 
 | Project | What |
 |---|---|
 | `src/AtcSoft.Log.Viewer` | App core without UI: data paths, the migration of earlier data, the profile format and timeline modes |
 | `src/AtcSoft.Log.Viewer.Wpf` | The WPF front end: views and view models |
 | `src/AtcSoft.Log.Viewer.Wpf.App` | The exe: starts the app and shows the main window |
-| `test/AtcSoft.Log.Viewer.Tests` | Tests for the core |
 | `src/Atc.LogFiles.Collector` | Reads and tails log4net, NLog and Serilog files (pure C#, no reference to the app) |
-| `src/Atc.LogFiles.Analyzer` | Filters, counts, highlight matching and timeline buckets (pure C#, no reference to the app) |
-| `test/Atc.LogFiles.*.Tests` | Tests for the libraries and the sample generator |
+| `src/Atc.LogFiles.Analyzer` | Combines collectors; filters, counts, highlight matching, timeline buckets, and watching the folder for new files (pure C#, no reference to the app) |
+| `sample/Atc.LogFiles.Simulator` | Web page that writes, rolls and deletes log files, see the [sample README](sample/README.md) |
+| `sample/AtcSoft.Log.Viewer.Sample.AppHost` | Aspire AppHost that starts the simulator and the viewer |
+| `test/AtcSoft.Log.Viewer.Tests` | Tests for the core |
+| `test/Atc.LogFiles.*.Tests` | Tests for the libraries, the sample generator and the simulator |
+| `test/AtcSoft.Log.Viewer.E2E.Tests` | UI tests that drive the app, the simulator page and the AppHost, see [UI tests](docs/e2e-tests.md) |
 | `tool/Atc.LogFiles.SampleGenerator` | Writes big sample log files for testing, see its [README](tool/Atc.LogFiles.SampleGenerator/README.md) |
 | `benchmark/Atc.LogFiles.Benchmarks` | BenchmarkDotNet benchmarks for collecting and filtering |
+
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [📦 Atc.LogFiles libraries](docs/log-files-libraries.md) | Read, filter, count, highlight and build a timeline in your own code |
+| [🧪 Log simulator](sample/README.md) | Watch the viewer follow files that are written, rolled and deleted |
+| [🖥️ UI tests](docs/e2e-tests.md) | End-to-end tests that drive the app |
+| [🏭 Sample generator](tool/Atc.LogFiles.SampleGenerator/README.md) | Write big sample log files |
