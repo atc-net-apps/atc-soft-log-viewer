@@ -45,7 +45,7 @@ public sealed class SampleAppHostTests
         {
             if (string.Equals(message.Type, "error", StringComparison.Ordinal))
             {
-                problems.Add($"console: {message.Text}");
+                problems.Add($"console ({message.Location}): {message.Text}");
             }
         };
         page.PageError += (_, error) => problems.Add($"page error: {error}");
