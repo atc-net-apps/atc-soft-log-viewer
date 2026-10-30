@@ -55,6 +55,9 @@ internal sealed class FakeFileCollector : ILog4NetFileCollector, INLogFileCollec
     {
     }
 
+    public bool? IsCopyOfReadFile(FileInfo file)
+        => false;
+
     public void StopMonitoringFile(FileInfo file)
     {
     }

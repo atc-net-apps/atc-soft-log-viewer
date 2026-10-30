@@ -40,5 +40,13 @@ public interface IFileCollector
 
     void StopMonitoringAllFiles();
 
+    /// <summary>
+    /// Tells whether a new file is a copy of a file already read: it starts with the same first entry line.
+    /// A logger that rolls by copy and truncate makes such a copy, and its lines have already been read.
+    /// </summary>
+    /// <param name="file">The new file.</param>
+    /// <returns><see langword="null"/> while the file has no complete first line yet.</returns>
+    bool? IsCopyOfReadFile(FileInfo file);
+
     void StopMonitoringFile(FileInfo file);
 }

@@ -13,6 +13,12 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
 
     private readonly ConcurrentDictionary<string, MonitoredFile> monitoredFiles = new(StringComparer.Ordinal);
 
+    /// <summary>
+    /// The first line of each file read, when it is an entry line, to tell an archive copy from a new file.
+    /// Header lines are left out: two unrelated files can start with the same header.
+    /// </summary>
+    private readonly ConcurrentDictionary<string, byte> firstEntryLines = new(StringComparer.Ordinal);
+
     public event EventHandler<LogEntryEventArgs>? CollectedEntry;
 
     public event EventHandler<FileEventArgs>? CollectedFileDone;
@@ -169,6 +175,24 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
         }
     }
 
+    public bool? IsCopyOfReadFile(FileInfo file)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+
+        try
+        {
+            using var reader = CreateReader(CompleteLinesStream.Create(OpenStream(file)));
+            var firstLine = reader.ReadLine();
+            return firstLine is null
+                ? null
+                : firstEntryLines.ContainsKey(firstLine);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
     public bool IsFileMonitoring(FileInfo file)
     {
         ArgumentNullException.ThrowIfNull(file);
@@ -188,6 +212,7 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
 
     public void StopMonitoringAllFiles()
     {
+        firstEntryLines.Clear();
         foreach (var key in monitoredFiles.Keys)
         {
             if (monitoredFiles.TryRemove(key, out var monitoredFile))
@@ -365,7 +390,18 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
         var sourceSystem = GetSourceSystemFromSourceIdentifier(sourceIdentifier);
 
         return new LogEntryAssembler(
-            (lineNumber, line) => ParseRootLine(sourceIdentifier, sourceSystem, lineNumber, line),
+            (lineNumber, line) =>
+            {
+                var entry = ParseRootLine(sourceIdentifier, sourceSystem, lineNumber, line);
+                if (lineNumber == 1 &&
+                    entry is not null)
+                {
+                    // Also after a truncation, when the tail reads the file from the start again
+                    firstEntryLines.TryAdd(line, 0);
+                }
+
+                return entry;
+            },
             onEntry,
             (lineNumber, line) => LineNotRead?.Invoke(this, new LineNotReadEventArgs(file, lineNumber, line)));
     }

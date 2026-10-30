@@ -601,6 +601,18 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
             }
         }
 
+        switch (collector.IsCopyOfReadFile(file))
+        {
+            case null:
+                // The first line isn't complete yet; the next change tries again
+                newFiles.TryUpdate(fullPath, newValue: false, comparisonValue: true);
+                return;
+            case true:
+                // An archive copy from a roll by copy and truncate: its lines have been read already
+                newFiles.TryRemove(fullPath, out _);
+                return;
+        }
+
         newFiles.TryRemove(fullPath, out _);
 
         TaskHelper.FireAndForget(

@@ -233,7 +233,7 @@ public sealed class FolderMonitoringTests : IDisposable
         received.Select(x => x.MessageFull).Should().Equal("started", "last before roll", "first after roll");
     }
 
-    [Fact(Skip = "LV-61: the archive copy is collected as a new file, so the lines before the roll arrive twice")]
+    [Fact]
     public async Task RollByCopyAndTruncate_NothingIsLostOrDuplicated()
     {
         // Arrange
@@ -251,6 +251,29 @@ public sealed class FolderMonitoringTests : IDisposable
         (await WaitForMessages("first after roll")).Should().BeTrue();
         await Task.Delay(1_500, CancellationToken);
         received.Select(x => x.MessageFull).Should().Equal("started", "last before roll", "first after roll");
+    }
+
+    [Fact]
+    public async Task TwoRollsByCopyAndTruncate_NothingIsDuplicated()
+    {
+        // Arrange
+        var file = await WriteLines("app.log", "started");
+        await StartWatching();
+        File.Copy(file.FullName, Path.Combine(directory.FullName, "app.1.log"));
+        await File.WriteAllTextAsync(file.FullName, string.Empty, CancellationToken);
+        await AppendLines(file, "after roll 1");
+        (await WaitForMessages("after roll 1")).Should().BeTrue();
+        await Task.Delay(500, CancellationToken);
+
+        // Act - the second archive starts with the first line the tail read after the first roll
+        File.Copy(file.FullName, Path.Combine(directory.FullName, "app.2.log"));
+        await File.WriteAllTextAsync(file.FullName, string.Empty, CancellationToken);
+        await AppendLines(file, "after roll 2");
+
+        // Assert
+        (await WaitForMessages("after roll 2")).Should().BeTrue();
+        await Task.Delay(1_500, CancellationToken);
+        received.Select(x => x.MessageFull).Should().Equal("started", "after roll 1", "after roll 2");
     }
 
     [Fact]
