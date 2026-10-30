@@ -411,17 +411,46 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
         CountLogEntriesStatsAndSend();
     }
 
-    private void AddEntries(IReadOnlyCollection<AtcLogEntryEx> entries)
+    /// <summary>
+    /// Adds a batch, which is in order, at its time: usually after what is shown, but a slower file's
+    /// entries can be older than entries already shown.
+    /// </summary>
+    private void AddEntries(IReadOnlyList<AtcLogEntryEx> entries)
     {
-        if (entries.Count > MaxEntriesToAddOneByOne)
+        if (entries.Count == 0)
+        {
+            return;
+        }
+
+        var isAfterShown = LogEntries.Count == 0 ||
+                           LogEntryOrder.Instance.Compare(LogEntries[^1].Entry, entries[0].Entry) <= 0;
+        if (isAfterShown &&
+            entries.Count > MaxEntriesToAddOneByOne)
         {
             LogEntries.AddRange(entries);
+        }
+        else if (isAfterShown)
+        {
+            foreach (var entry in entries)
+            {
+                LogEntries.Add(entry);
+            }
+        }
+        else if (entries.Count > MaxEntriesToAddOneByOne)
+        {
+            // Many older entries: one refill is cheaper than many inserts
+            var merged = new List<AtcLogEntryEx>(LogEntries.Count + entries.Count);
+            merged.AddRange(LogEntries);
+            merged.AddRange(entries);
+            merged.Sort(static (x, y) => LogEntryOrder.Instance.Compare(x.Entry, y.Entry));
+            LogEntries.Clear();
+            LogEntries.AddRange(merged);
         }
         else
         {
             foreach (var entry in entries)
             {
-                LogEntries.Add(entry);
+                LogEntries.Insert(LogEntryOrder.FindInsertIndex(LogEntries, entry.Entry, static x => x.Entry), entry);
             }
         }
 
