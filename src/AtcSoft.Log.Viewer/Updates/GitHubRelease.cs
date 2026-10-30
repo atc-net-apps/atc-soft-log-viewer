@@ -22,7 +22,8 @@ public sealed record GitHubRelease(
     /// <param name="json">The response of <c>releases/latest</c>.</param>
     /// <param name="installerAssetName">The file name of this app's installer. Only that asset is offered,
     /// never another file in the release.</param>
-    /// <returns>The release, or <see langword="null"/> when <paramref name="json"/> isn't a release with a version tag.</returns>
+    /// <returns>The release, or <see langword="null"/> when <paramref name="json"/> isn't a release with a version tag
+    /// and a release page on github.com. An installer link outside github.com is ignored.</returns>
     public static GitHubRelease? Parse(
         string json,
         string installerAssetName)
@@ -35,7 +36,8 @@ public sealed record GitHubRelease(
                 !root.TryGetProperty("tag_name", out var tagName) ||
                 !Version.TryParse(tagName.GetString()?.TrimStart('v'), out var version) ||
                 !root.TryGetProperty("html_url", out var htmlUrl) ||
-                !Uri.TryCreate(htmlUrl.GetString(), UriKind.Absolute, out var releaseUrl))
+                !Uri.TryCreate(htmlUrl.GetString(), UriKind.Absolute, out var releaseUrl) ||
+                !IsOnGitHub(releaseUrl))
             {
                 return null;
             }
@@ -61,6 +63,15 @@ public sealed record GitHubRelease(
         return ThreeParts(Version) > ThreeParts(current);
     }
 
+    /// <summary>
+    /// Tells whether a link is an https link on github.com. The shell opens it, so a tampered response
+    /// must not be able to start another program or send the user to another site.
+    /// </summary>
+    private static bool IsOnGitHub(Uri url)
+        => url.Scheme == Uri.UriSchemeHttps &&
+           url.UserInfo.Length == 0 &&
+           string.Equals(url.Host, "github.com", StringComparison.OrdinalIgnoreCase);
+
     private static Version ThreeParts(Version version)
         => new(version.Major, version.Minor, System.Math.Max(version.Build, 0));
 
@@ -79,7 +90,8 @@ public sealed record GitHubRelease(
             if (asset.TryGetProperty("name", out var name) &&
                 string.Equals(name.GetString(), assetName, StringComparison.OrdinalIgnoreCase) &&
                 asset.TryGetProperty("browser_download_url", out var downloadUrl) &&
-                Uri.TryCreate(downloadUrl.GetString(), UriKind.Absolute, out var url))
+                Uri.TryCreate(downloadUrl.GetString(), UriKind.Absolute, out var url) &&
+                IsOnGitHub(url))
             {
                 return url;
             }

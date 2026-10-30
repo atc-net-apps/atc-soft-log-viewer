@@ -66,6 +66,40 @@ public sealed class GitHubReleaseTests
         => GitHubRelease.Parse(json, UpdateCheck.InstallerAssetName).Should().BeNull();
 
     [Theory]
+    [InlineData("http://github.com/atc-net-apps/atc-soft-log-viewer/releases/download/v1.2.0/AtcSoft.Log.Viewer.Installer.msi")]
+    [InlineData("file:///C:/Temp/AtcSoft.Log.Viewer.Installer.msi")]
+    [InlineData("https://example.com/AtcSoft.Log.Viewer.Installer.msi")]
+    [InlineData("https://github.com.example.com/AtcSoft.Log.Viewer.Installer.msi")]
+    [InlineData("https://github.com@example.com/AtcSoft.Log.Viewer.Installer.msi")]
+    [InlineData("https://example.com/github.com/AtcSoft.Log.Viewer.Installer.msi")]
+    public void Parse_AnInstallerOutsideGitHub_DownloadsFromTheReleasePage(
+        string installerLink)
+    {
+        // Arrange - the download is started by the shell, so only https links on github.com are trusted
+        var json = ReleaseJson("v1.2.0", ("AtcSoft.Log.Viewer.Installer.msi", installerLink));
+
+        // Act
+        var actual = GitHubRelease.Parse(json, UpdateCheck.InstallerAssetName);
+
+        // Assert
+        actual!.DownloadUrl.Should().Be(new Uri(ReleasePage));
+    }
+
+    [Theory]
+    [InlineData("http://github.com/atc-net-apps/atc-soft-log-viewer/releases/tag/v1.2.0")]
+    [InlineData("file:///C:/Windows/System32/calc.exe")]
+    [InlineData("https://example.com/releases/tag/v1.2.0")]
+    [InlineData("https://github.com.example.com/releases/tag/v1.2.0")]
+    public void Parse_AReleasePageOutsideGitHub_IsNull(string releasePageLink)
+    {
+        // Arrange
+        var json = ReleaseJson("v1.2.0", releasePageLink);
+
+        // Act & Assert
+        GitHubRelease.Parse(json, UpdateCheck.InstallerAssetName).Should().BeNull();
+    }
+
+    [Theory]
     [InlineData("1.2.0", "1.1.9", true)]
     [InlineData("1.2.0", "1.2.0", false)]
     [InlineData("1.2.0", "1.3.0", false)]
@@ -107,10 +141,16 @@ public sealed class GitHubReleaseTests
     private static string ReleaseJson(
         string tag,
         params (string Name, string Url)[] assets)
+        => ReleaseJson(tag, ReleasePage, assets);
+
+    private static string ReleaseJson(
+        string tag,
+        string releasePage,
+        params (string Name, string Url)[] assets)
         => new JsonObject
         {
             ["tag_name"] = tag,
-            ["html_url"] = ReleasePage,
+            ["html_url"] = releasePage,
             ["assets"] = new JsonArray(assets
                 .Select(a => (JsonNode)new JsonObject
                 {
