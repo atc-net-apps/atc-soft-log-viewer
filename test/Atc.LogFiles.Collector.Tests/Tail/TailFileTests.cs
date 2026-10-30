@@ -34,6 +34,28 @@ public sealed class TailFileTests : IDisposable
     }
 
     [Fact]
+    public async Task AppendedLines_InWindows1252OrUtf8_AreDecoded()
+    {
+        // Arrange - older loggers write the Windows code page
+        const string message = "Kunde Søren Ærø åbnede ordre – €";
+        var file = CreateEmptyFile("app.log");
+        var received = new ConcurrentQueue<TailLine>();
+        StartTail(file, received.Enqueue);
+        var windows1252 = CodePagesEncodingProvider.Instance.GetEncoding(1252)!;
+
+        // Act
+        await using (var stream = new FileStream(file.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+        {
+            await stream.WriteAsync(windows1252.GetBytes(message + "\r\n"), CancellationToken);
+            await stream.WriteAsync(Encoding.UTF8.GetBytes(message + "\r\n"), CancellationToken);
+        }
+
+        // Assert
+        (await WaitUntil(() => received.Count >= 2)).Should().BeTrue();
+        received.Select(x => x.Line).Should().Equal(message, message);
+    }
+
+    [Fact]
     public async Task TailingManyFiles_DoesNotStarveTheThreadPool()
     {
         // Arrange

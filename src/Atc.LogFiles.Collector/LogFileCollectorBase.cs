@@ -181,7 +181,7 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
 
         try
         {
-            using var reader = CreateReader(CompleteLinesStream.Create(OpenStream(file)));
+            using var reader = OpenCompleteLinesReader(file);
             var firstLine = reader.ReadLine();
             return firstLine is null
                 ? null
@@ -262,7 +262,7 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
         long lineNumber = 0;
         long endOffset;
         using (var reader = stopBeforeUnfinishedLine
-                   ? CreateReader(CompleteLinesStream.Create(OpenStream(file)))
+                   ? OpenCompleteLinesReader(file)
                    : OpenReader(file))
         {
             while (await reader.ReadLineAsync(cancellationToken).ConfigureAwait(continueOnCapturedContext: false) is { } line)
@@ -337,7 +337,10 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
         string line);
 
     private static StreamReader OpenReader(FileInfo file)
-        => CreateReader(OpenStream(file));
+    {
+        var stream = OpenStream(file);
+        return CreateReader(stream, LogTextEncoding.Detect(stream));
+    }
 
     private static FileStream OpenStream(FileInfo file)
         => new(
@@ -348,10 +351,22 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
             bufferSize: 64 * 1024,
             FileOptions.SequentialScan | FileOptions.Asynchronous);
 
-    private static StreamReader CreateReader(Stream stream)
+    /// <summary>
+    /// Opens the file for reading only its complete lines, in its encoding.
+    /// </summary>
+    private static StreamReader OpenCompleteLinesReader(FileInfo file)
+    {
+        var stream = OpenStream(file);
+        var encoding = LogTextEncoding.Detect(stream);
+        return CreateReader(CompleteLinesStream.Create(stream), encoding);
+    }
+
+    private static StreamReader CreateReader(
+        Stream stream,
+        Encoding encoding)
         => new(
             stream,
-            Encoding.UTF8,
+            encoding,
             detectEncodingFromByteOrderMarks: true);
 
     private async Task<bool> CollectSingleFile(

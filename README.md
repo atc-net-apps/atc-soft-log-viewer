@@ -81,6 +81,8 @@ Small sample files for each format are in [`sample-data/`](sample-data).
 
 The app finds the format of a file or folder by itself. These are the default layouts it reads.
 
+🔤 Files are read as UTF-8 (with or without a byte order mark) or UTF-16 with a byte order mark. A file that isn't valid UTF-8, like the Windows code page older log4net and NLog setups write, is read as Windows-1252, so æ, ø, å and € show right.
+
 ### 🪵 log4net
 
 * [Project page to log4net](https://logging.apache.org/log4net/)

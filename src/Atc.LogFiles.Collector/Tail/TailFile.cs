@@ -407,12 +407,12 @@ public class TailFile : IDisposable
         string line;
         if (partialLine.WrittenCount == 0)
         {
-            line = Encoding.UTF8.GetString(lineBytes);
+            line = LogTextEncoding.DecodeLine(lineBytes);
         }
         else
         {
             partialLine.Write(lineBytes);
-            line = Encoding.UTF8.GetString(partialLine.WrittenSpan);
+            line = LogTextEncoding.DecodeLine(partialLine.WrittenSpan);
             partialLine.ResetWrittenCount();
         }
 
