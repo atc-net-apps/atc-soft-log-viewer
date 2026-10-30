@@ -39,7 +39,10 @@ public static class DialogBoxFactory
         lcDefaultCollector.SelectedKey = profileViewModel.CollectorType.ToString();
 
         var lcMaxDaysBack = labelControlsLeftSide.FindByIdentifier<LabelIntegerBox>(Constants.Forms.Profile.MaxDaysBack)!;
-        lcMaxDaysBack.Value = profileViewModel.CollectorConfiguration.MaxDaysBack;
+
+        // Profiles saved with 0 read the last year; show that, since the field starts at 1
+        var maxDaysBack = profileViewModel.CollectorConfiguration.MaxDaysBack;
+        lcMaxDaysBack.Value = maxDaysBack == 0 ? 365 : maxDaysBack;
 
         var lcMonitorFiles = labelControlsLeftSide.FindByIdentifier<LabelToggleSwitch>(Constants.Forms.Profile.MonitorFiles)!;
         lcMonitorFiles.IsOn = profileViewModel.CollectorConfiguration.MonitorFiles;
@@ -108,9 +111,9 @@ public static class DialogBoxFactory
             },
             new LabelIntegerBox
             {
-                LabelText = "Max days back",
+                LabelText = "Max days back (1-365)",
                 Tag = Constants.Forms.Profile.MaxDaysBack,
-                Minimum = 0,
+                Minimum = 1,
                 Maximum = 365,
                 Value = 10,
             },

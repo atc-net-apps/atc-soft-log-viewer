@@ -26,7 +26,7 @@ Download `AtcSoft.Log.Viewer.Installer.msi` from the [latest release](https://gi
 | | 🖱️ **Drag and drop** | Drop files and folders from Windows Explorer; they are added to what is already open |
 | | 🗂️ **Profiles** | Save a log folder, format, highlights and file settings as a profile: new (`Ctrl+N`), open (`Ctrl+P`), edit, save (`Ctrl+S`) |
 | | 🕘 **Recent files** | Open the last used profile (`Ctrl+R`), or let the app open it at start |
-| | ⚙️ **File settings** | Per profile: how many days back to read (by when a file was last written), whether to follow the files, and file name terms to pick only some files. Files written within the last day are followed |
+| | ⚙️ **File settings** | Per profile: how many days back to read, 1 to 365, 10 by default (by when a file was last written), whether to follow the files, and file name terms to pick only some files. Files written within the last day are followed |
 | **Live** | 📡 **Live tail** | New lines show up while the files are written - also when a file is rolled by rename, or truncated |
 | | 🆕 **New files** | New files that show up in the folder are picked up |
 | | 🧾 **Multi-line entries** | Stack traces and other lines that belong to one entry stay together |
