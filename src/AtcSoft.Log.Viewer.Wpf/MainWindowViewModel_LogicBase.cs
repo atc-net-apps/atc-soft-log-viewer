@@ -10,9 +10,9 @@ public partial class MainWindowViewModel
 {
     private async Task CheckForNewVersion()
     {
-        var latest = await gitHubReleaseService
-            .GetLatestAsync(CancellationToken.None)
-            .ConfigureAwait(false);
+        var latest = (await gitHubReleaseService
+            .CheckAsync(CancellationToken.None)
+            .ConfigureAwait(false)).Release;
 
         if (latest is not null &&
             latest.IsNewerThan(WpfApp.CurrentVersion))

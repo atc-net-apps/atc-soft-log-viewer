@@ -148,7 +148,7 @@ public sealed class GitHubReleaseTests
     }
 
     [Fact]
-    public async Task GetLatestAsync_FromAFile_ReadsTheRelease()
+    public async Task CheckAsync_FromAFile_ReadsTheRelease()
     {
         // Arrange
         var file = Path.Combine(Path.GetTempPath(), $"release-{Guid.NewGuid():N}.json");
@@ -158,11 +158,12 @@ public sealed class GitHubReleaseTests
         try
         {
             // Act
-            var actual = await sut.GetLatestAsync(TestContext.Current.CancellationToken);
+            var actual = await sut.CheckAsync(TestContext.Current.CancellationToken);
 
             // Assert
-            actual!.Version.Should().Be(new Version(9, 0, 0));
-            actual.DownloadUrl.Should().Be(new Uri(InstallerDownload));
+            actual.Status.Should().Be(ReleaseCheckStatus.Found);
+            actual.Release!.Version.Should().Be(new Version(9, 0, 0));
+            actual.Release.DownloadUrl.Should().Be(new Uri(InstallerDownload));
         }
         finally
         {
@@ -171,13 +172,50 @@ public sealed class GitHubReleaseTests
     }
 
     [Fact]
-    public async Task GetLatestAsync_FromAMissingFile_IsNull()
+    public async Task CheckAsync_FromAMissingFile_IsUnavailable()
     {
         // Arrange
         using var sut = new GitHubReleaseService(new Uri(Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}.json")));
 
-        // Act & Assert
-        (await sut.GetLatestAsync(TestContext.Current.CancellationToken)).Should().BeNull();
+        // Act
+        var actual = await sut.CheckAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        actual.Status.Should().Be(ReleaseCheckStatus.Unavailable);
+        actual.Release.Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.NotFound, ReleaseCheckStatus.NoRelease)]
+    [InlineData(HttpStatusCode.Forbidden, ReleaseCheckStatus.Unavailable)]
+    [InlineData(HttpStatusCode.InternalServerError, ReleaseCheckStatus.Unavailable)]
+    public async Task CheckAsync_TellsNoReleaseYetFromNoAnswer(
+        HttpStatusCode statusCode,
+        ReleaseCheckStatus expected)
+    {
+        // Arrange - GitHub answers 404 for releases/latest until the first release is published
+        using var handler = new FixedAnswerHandler(statusCode);
+        using var sut = new GitHubReleaseService(UpdateCheck.LatestReleaseApiUrl, handler);
+
+        // Act
+        var actual = await sut.CheckAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        actual.Status.Should().Be(expected);
+    }
+
+    [Fact]
+    public async Task CheckAsync_Offline_IsUnavailable()
+    {
+        // Arrange
+        using var handler = new FixedAnswerHandler(error: new HttpRequestException("No network"));
+        using var sut = new GitHubReleaseService(UpdateCheck.LatestReleaseApiUrl, handler);
+
+        // Act
+        var actual = await sut.CheckAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        actual.Status.Should().Be(ReleaseCheckStatus.Unavailable);
     }
 
     [Theory]
@@ -224,5 +262,19 @@ public sealed class GitHubReleaseTests
         }
 
         return directory ?? throw new InvalidOperationException("The repository root was not found.");
+    }
+
+    private sealed class FixedAnswerHandler(
+        HttpStatusCode statusCode = HttpStatusCode.OK,
+        HttpRequestException? error = null)
+        : HttpMessageHandler
+    {
+        [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The caller disposes the response.")]
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+            => error is null
+                ? Task.FromResult(new HttpResponseMessage(statusCode) { Content = new StringContent("{}") })
+                : Task.FromException<HttpResponseMessage>(error);
     }
 }

@@ -27,13 +27,16 @@ public partial class CheckForUpdatesBoxDialog
         RoutedEventArgs e)
     {
         // Bounded by the service's request timeout; a late answer to a closed dialog does no harm
-        latestRelease = await gitHubReleaseService
-            .GetLatestAsync(CancellationToken.None)
+        var check = await gitHubReleaseService
+            .CheckAsync(CancellationToken.None)
             .ConfigureAwait(true);
 
+        latestRelease = check.Release;
         if (latestRelease is null)
         {
-            StatusTextBlock.Text = "Unable to check for updates. Try again later.";
+            StatusTextBlock.Text = check.Status == ReleaseCheckStatus.NoRelease
+                ? "No release has been published yet."
+                : "Unable to check for updates. Try again later.";
             return;
         }
 

@@ -6,9 +6,9 @@ namespace AtcSoft.Log.Viewer.Updates;
 public interface IGitHubReleaseService
 {
     /// <summary>
-    /// Gets the latest release.
+    /// Checks for the latest release.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The release, or <see langword="null"/> when it can't be read: offline, rate limited or no release yet.</returns>
-    Task<GitHubRelease?> GetLatestAsync(CancellationToken cancellationToken);
+    /// <returns>The release, or why there is none: no release yet, or no answer.</returns>
+    Task<ReleaseCheck> CheckAsync(CancellationToken cancellationToken);
 }
