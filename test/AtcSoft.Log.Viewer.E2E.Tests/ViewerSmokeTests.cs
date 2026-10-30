@@ -52,6 +52,21 @@ public sealed class ViewerSmokeTests
     }
 
     /// <summary>
+    /// Started from another folder, as a shortcut, "Open with" or a terminal does: the app must
+    /// find its settings next to the exe.
+    /// </summary>
+    [Fact]
+    public void Starts_From_Another_Working_Folder()
+    {
+        E2ESettings.SkipUnlessEnabled();
+
+        using var run = new ViewerRun("other-folder", workingDirectory: E2ESettings.NewFolder("other-working-folder"));
+
+        run.App.ShouldNotHaveCrashed();
+        run.App.CloseApp(run.Main).Should().BeTrue("the viewer must close when its window is closed");
+    }
+
+    /// <summary>
     /// Opens the Application menu (the ribbon's backstage) and presses one of its items.
     /// </summary>
     /// <param name="app">The app.</param>

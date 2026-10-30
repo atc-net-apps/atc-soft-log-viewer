@@ -30,7 +30,8 @@ internal sealed class ViewerRun : IDisposable
     public ViewerRun(
         string name,
         string? logFolder = null,
-        LogFileCollectorType collectorType = LogFileCollectorType.None)
+        LogFileCollectorType collectorType = LogFileCollectorType.None,
+        string? workingDirectory = null)
     {
         DataFolder = E2ESettings.NewFolder(name + "-data");
         if (logFolder is not null)
@@ -46,7 +47,8 @@ internal sealed class ViewerRun : IDisposable
                 [AppDataPaths.DataPathVariable] = DataFolder,
                 ["Application__OpenRecentFileOnStartup"] = "true",
             },
-            Path.Combine(DataFolder, "viewer-output.log"));
+            Path.Combine(DataFolder, "viewer-output.log"),
+            workingDirectory);
 
         try
         {

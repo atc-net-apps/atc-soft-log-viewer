@@ -30,7 +30,7 @@ public partial class App
                 configurationBuilder =>
                 {
                     configuration = configurationBuilder
-                        .SetBasePath(Directory.GetCurrentDirectory())
+                        .SetBasePath(AppContext.BaseDirectory)
                         .AddJsonFile(AtcFileNameConstants.AppSettings, optional: false, reloadOnChange: true)
                         .AddJsonFile(AtcFileNameConstants.AppSettingsCustom, optional: true, reloadOnChange: true)
                         .AddEnvironmentVariables()
