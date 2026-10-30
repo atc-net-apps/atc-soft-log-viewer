@@ -254,6 +254,22 @@ internal sealed class DesktopApp : IDisposable
     }
 
     /// <summary>
+    /// Gets whether <see cref="Press"/> can press the element: a button's text label has the button's name, but can't be pressed.
+    /// </summary>
+    /// <param name="element">The element.</param>
+    /// <returns><see langword="true"/> when the element has a pattern to press it with.</returns>
+    public static bool CanPress(AutomationElement element)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+
+        var patterns = element.Patterns;
+        return patterns.Invoke.IsSupported ||
+               patterns.Toggle.IsSupported ||
+               patterns.SelectionItem.IsSupported ||
+               patterns.ExpandCollapse.IsSupported;
+    }
+
+    /// <summary>
     /// Presses a button, a ribbon button, a menu item or a tab the way UI Automation does:
     /// Invoke, else Toggle, else Select, else Expand. Never a mouse click.
     /// </summary>

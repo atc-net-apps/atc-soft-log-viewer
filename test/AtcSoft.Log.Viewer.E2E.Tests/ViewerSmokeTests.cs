@@ -85,12 +85,15 @@ public sealed class ViewerSmokeTests
                 main,
                 e => string.Equals(e.Properties.ClassName.ValueOrDefault, "Backstage", StringComparison.Ordinal),
                 "of the class Backstage (the Application menu)"));
-
-            item = app.FindWhere(
-                main,
-                e => string.Equals(e.Properties.Name.ValueOrDefault, itemName, StringComparison.Ordinal) && !e.IsOffscreen,
-                $"named '{itemName}' in the Application menu");
         }
+
+        // Only an element that can be pressed: the item's text label has the same name, and may be found first
+        item = app.FindWhere(
+            main,
+            e => string.Equals(e.Properties.Name.ValueOrDefault, itemName, StringComparison.Ordinal) &&
+                 !e.IsOffscreen &&
+                 DesktopApp.CanPress(e),
+            $"named '{itemName}' that can be pressed, in the Application menu");
 
         DesktopApp.Press(item);
     }
