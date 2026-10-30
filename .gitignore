@@ -441,3 +441,7 @@ sample/*.log
 
 # Log files written by sample/Atc.LogFiles.Simulator
 sample/output/
+
+# Local working notes: assessments and issue drafts
+plans/*
+issues/*
