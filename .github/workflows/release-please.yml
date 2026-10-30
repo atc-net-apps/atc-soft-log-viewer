@@ -5,42 +5,81 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  CONFIGURATION: Release
+
 jobs:
   release-please:
-    # WPF targets Windows, so the app must be built on a Windows runner.
-    # A release builds the app; release assets (portable zip, MSI) come later (LV-20, LV-21).
-    runs-on: windows-latest
-    permissions:
-      contents: read
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
 
     steps:
       - name: release-please
         id: release
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
-          token: ${{ secrets.RELEASE_PLEASE_PAT }}
+          # A PAT is used rather than GITHUB_TOKEN so the release pull request
+          # triggers build.yml: events raised by GITHUB_TOKEN don't trigger workflows.
+          # The fallback keeps releases working if the secret is missing.
+          token: ${{ secrets.RELEASE_PLEASE_PAT || secrets.GITHUB_TOKEN }}
 
+  build-installer:
+    name: Build MSI
+    # WPF and WiX need a Windows runner.
+    runs-on: windows-latest
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    permissions:
+      contents: read
+
+    steps:
       - name: 🛒 Checkout repository
-        if: ${{ steps.release.outputs.release_created }}
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-          ref: ${{ steps.release.outputs.tag_name }}
+          ref: ${{ needs.release-please.outputs.tag_name }}
 
       - name: ⚙️ Setup .NET
-        if: ${{ steps.release.outputs.release_created }}
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: 🧹 Clean
-        if: ${{ steps.release.outputs.release_created }}
-        run: dotnet clean AtcSoft.Log.Viewer.slnx -c Release && dotnet nuget locals all --clear
+      - name: 📦 Publish the app
+        run: dotnet publish src/AtcSoft.Log.Viewer.Wpf.App/AtcSoft.Log.Viewer.Wpf.App.csproj --configuration ${{ env.CONFIGURATION }} --output ./publish
 
-      - name: 🔁 Restore packages
-        if: ${{ steps.release.outputs.release_created }}
-        run: dotnet restore AtcSoft.Log.Viewer.slnx
+      # No -p:ProductVersion here: it comes from setup/Directory.Build.props.
+      - name: 🛠️ Build the installer
+        run: dotnet build setup/AtcSoft.Log.Viewer.Installer/AtcSoft.Log.Viewer.Installer.wixproj --configuration ${{ env.CONFIGURATION }} -p:PublishDir=${{ github.workspace }}/publish
 
-      - name: 🛠️ Build solution
-        if: ${{ steps.release.outputs.release_created }}
-        run: dotnet build AtcSoft.Log.Viewer.slnx -c Release --no-restore /p:UseSourceLink=true
+      - name: ⬆️ Upload the MSI
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: msi-installer
+          path: setup/AtcSoft.Log.Viewer.Installer/bin/${{ env.CONFIGURATION }}/*.msi
+          retention-days: 5
+
+  upload-assets:
+    name: Upload release assets
+    runs-on: ubuntu-latest
+    needs: [release-please, build-installer]
+    if: needs.release-please.outputs.release_created == 'true'
+
+    steps:
+      - name: ⬇️ Download the MSI
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: msi-installer
+          path: ./msi
+
+      # The update check looks for this asset by name: AtcSoft.Log.Viewer.Installer.msi.
+      - name: 📎 Attach the MSI to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ needs.release-please.outputs.tag_name }}" ./msi/*.msi --clobber --repo "${{ github.repository }}"

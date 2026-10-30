@@ -1,0 +1,27 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+  <PropertyGroup>
+    <OutputType>Package</OutputType>
+    <InstallerPlatform>x64</InstallerPlatform>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PublishDir>$(MSBuildThisFileDirectory)..\..\publish</PublishDir>
+    <ProductVersion Condition="'$(ProductVersion)' == ''">1.0.0</ProductVersion>
+    <DefineConstants>HarvestDirectory=$(PublishDir);ProductVersion=$(ProductVersion)</DefineConstants>
+    <!-- ICE61 must be suppressed when MajorUpgrade/@AllowSameVersionUpgrades="yes":
+         that option sets the upgrade Maximum equal to the product version, which ICE61 flags. -->
+    <SuppressIces>ICE61</SuppressIces>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
+    <PackageReference Include="WixToolset.Heat" Version="5.0.2" />
+  </ItemGroup>
+  <!-- Every file in the publish folder is installed -->
+  <ItemGroup>
+    <HarvestDirectory Include="$(PublishDir)"
+                      ComponentGroupName="HarvestedComponents"
+                      DirectoryRefId="INSTALLFOLDER"
+                      SuppressRegistry="true"
+                      SuppressRootDirectory="true" />
+    <BindPath Include="$(PublishDir)" />
+  </ItemGroup>
+</Project>

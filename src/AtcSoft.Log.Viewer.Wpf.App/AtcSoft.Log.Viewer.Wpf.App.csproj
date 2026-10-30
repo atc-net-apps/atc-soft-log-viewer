@@ -20,6 +20,11 @@
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <!-- The installer reads the icon for its shortcuts and Add/Remove Programs from the output folder -->
+    <Content Include="..\AtcSoft.Log.Viewer.Wpf\Resources\AppIcon.ico">
+      <Link>AppIcon.ico</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

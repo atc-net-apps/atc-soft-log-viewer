@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!--
+    Mirrors <Version> from the root Directory.Build.props, because this file
+    shadows it: MSBuild stops at the nearest Directory.Build.props, and this one
+    does not import its parent, so the root analyzers stay out of the WiX build.
+
+    Owned by release-please. Do not edit by hand.
+  -->
+  <PropertyGroup Label="Versioning">
+    <!-- x-release-please-start-version -->
+    <ProductVersion>1.0.0</ProductVersion>
+    <!-- x-release-please-end -->
+  </PropertyGroup>
+
+  <!-- No analyzers for WiX projects -->
+  <PropertyGroup>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+    <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
+  </PropertyGroup>
+
+</Project>

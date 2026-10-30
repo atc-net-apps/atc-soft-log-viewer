@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <!-- The published files are harvested by HarvestDirectory in the wixproj (HarvestedComponents). -->
+
+    <!-- Start menu shortcut -->
+    <Component Id="ApplicationShortcut" Guid="A6B9A796-58E4-47AD-BE9B-F14221D499AE" Directory="ApplicationProgramsFolder">
+      <Shortcut Id="ApplicationStartMenuShortcut"
+                Name="AtcSoft Log Viewer"
+                Description="View, follow and filter log files"
+                Target="[INSTALLFOLDER]AtcSoft.Log.Viewer.Wpf.App.exe"
+                WorkingDirectory="INSTALLFOLDER"
+                Icon="LogViewerIcon" />
+      <RemoveFolder Id="CleanUpShortCut" Directory="ApplicationProgramsFolder" On="uninstall" />
+      <RegistryValue Root="HKCU" Key="Software\AtcSoft\LogViewer" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+
+    <!-- Desktop shortcut -->
+    <Component Id="DesktopShortcut" Guid="1C64D516-036A-4AA0-91FC-7BF3D5311D89" Directory="DesktopFolder">
+      <Shortcut Id="DesktopShortcutLink"
+                Name="AtcSoft Log Viewer"
+                Description="View, follow and filter log files"
+                Target="[INSTALLFOLDER]AtcSoft.Log.Viewer.Wpf.App.exe"
+                WorkingDirectory="INSTALLFOLDER"
+                Icon="LogViewerIcon" />
+      <RegistryValue Root="HKCU" Key="Software\AtcSoft\LogViewer" Name="desktopshortcut" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+  </Fragment>
+</Wix>
