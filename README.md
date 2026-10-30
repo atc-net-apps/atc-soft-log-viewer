@@ -248,3 +248,4 @@ dotnet run --project src/AtcSoft.Log.Viewer.Wpf.App -c Release
 | [🧪 Log simulator](sample/README.md) | Watch the viewer follow files that are written, rolled and deleted |
 | [🖥️ UI tests](docs/e2e-tests.md) | End-to-end tests that drive the app |
 | [🏭 Sample generator](tool/Atc.LogFiles.SampleGenerator/README.md) | Write big sample log files |
+| [🤝 Contributing](CONTRIBUTING.md) | Build and test a change, commit messages, and how a release is made |
