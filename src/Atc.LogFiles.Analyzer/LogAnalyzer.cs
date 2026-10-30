@@ -15,6 +15,7 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
     private readonly Lock syncLock = new();
     private readonly Lock raiseLock = new();
     private readonly ConcurrentDictionary<string, bool> newFiles = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, byte> knownFiles = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<AtcLogEntry> logEntries = [];
     private readonly List<AtcLogEntry> pendingEntries = [];
     private readonly long[] logLevelCounts = new long[(int)LogLevel.None + 1];
@@ -28,6 +29,7 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
     private long filterVersion;
     private int activeCollectCount;
     private FileSystemWatcher? fileSystemWatcher;
+    private DirectoryInfo? watchedDirectory;
     private LogFilter logFilter;
     private LogFileCollectorType activeLogFileCollectorType;
     private LogFileCollectorConfiguration? activeLogFileCollectorConfiguration;
@@ -124,6 +126,7 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
         ArgumentNullException.ThrowIfNull(config);
 
         var collector = GetCollector(logFileCollectorType);
+        RememberExistingFiles(file.Directory!);
 
         await CollectAndNotify(
                 logFileCollectorType,
@@ -149,6 +152,7 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
         ArgumentNullException.ThrowIfNull(config);
 
         var collector = GetCollector(logFileCollectorType);
+        RememberExistingFiles(directory);
 
         await CollectAndNotify(
                 logFileCollectorType,
@@ -342,19 +346,85 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
         {
             fileSystemWatcher.Created -= OnFileCreated;
             fileSystemWatcher.Changed -= OnFileChanged;
+            fileSystemWatcher.Error -= OnFolderWatcherError;
             fileSystemWatcher.Dispose();
         }
 
         newFiles.Clear();
+        watchedDirectory = directory;
 
         fileSystemWatcher = new FileSystemWatcher(directory.FullName)
         {
             NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size,
+            InternalBufferSize = 64 * 1024,
         };
 
         fileSystemWatcher.Created += OnFileCreated;
         fileSystemWatcher.Changed += OnFileChanged;
+        fileSystemWatcher.Error += OnFolderWatcherError;
         fileSystemWatcher.EnableRaisingEvents = true;
+    }
+
+    internal FileSystemWatcher? FolderWatcher => fileSystemWatcher;
+
+    /// <summary>
+    /// The folder watcher lost events, for example when its buffer overflowed in a burst of new files.
+    /// Looks for files it missed, so they are not lost without a sign.
+    /// </summary>
+    /// <param name="sender">The folder watcher.</param>
+    /// <param name="e">The error.</param>
+    internal void OnFolderWatcherError(
+        object? sender,
+        ErrorEventArgs e)
+    {
+        var config = activeLogFileCollectorConfiguration;
+        var directory = watchedDirectory;
+        if (config is null ||
+            directory is null)
+        {
+            return;
+        }
+
+        string[] paths;
+        try
+        {
+            paths = Directory.GetFiles(directory.FullName);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // The folder is gone or can't be read right now, for example a network share that dropped
+            return;
+        }
+
+        foreach (var path in paths)
+        {
+            if (knownFiles.TryAdd(path, 0) &&
+                MatchesFileNameTerms(Path.GetFileName(path), config))
+            {
+                newFiles.TryAdd(path, false);
+                TryCollectNewFile(path, config);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Remembers the files in the folder before it is read, so a rescan after a watcher error only
+    /// picks up files that are new.
+    /// </summary>
+    private void RememberExistingFiles(DirectoryInfo directory)
+    {
+        knownFiles.Clear();
+        try
+        {
+            foreach (var path in Directory.EnumerateFiles(directory.FullName))
+            {
+                knownFiles.TryAdd(path, 0);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Reading the folder fails with its own error
+        }
     }
 
     private void OnCollectedEntry(
@@ -468,6 +538,7 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
             return;
         }
 
+        knownFiles.TryAdd(e.FullPath, 0);
         newFiles.TryAdd(e.FullPath, false);
         TryCollectNewFile(e.FullPath, config);
     }

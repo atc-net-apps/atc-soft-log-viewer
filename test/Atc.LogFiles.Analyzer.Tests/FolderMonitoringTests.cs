@@ -101,6 +101,27 @@ public sealed class FolderMonitoringTests : IDisposable
     }
 
     [Fact]
+    public async Task FolderWatcherError_NewFilesItMissed_AreFoundAndFollowed()
+    {
+        // Arrange - the folder watcher's buffer overflows in a burst of file events, so it misses a new file
+        await WriteLines("app-1.log", "first file");
+        await StartWatching();
+        sut.FolderWatcher!.EnableRaisingEvents = false;
+        var newFile = await WriteLines("app-2.log", "missed file");
+
+        // Act
+        sut.OnFolderWatcherError(sut.FolderWatcher, new ErrorEventArgs(new InternalBufferOverflowException()));
+        (await WaitForMessages("missed file")).Should().BeTrue();
+        await AppendLines(newFile, "missed file appended");
+
+        // Assert
+        (await WaitForMessages("missed file appended")).Should().BeTrue();
+        await Task.Delay(500, CancellationToken);
+        received.Select(x => x.MessageFull).Should().OnlyHaveUniqueItems();
+        received.Should().ContainSingle(x => x.MessageFull == "first file");
+    }
+
+    [Fact]
     public async Task FileCreatedBeforeToday_IsFollowed()
     {
         // Arrange - a service that writes to the same file across midnight
