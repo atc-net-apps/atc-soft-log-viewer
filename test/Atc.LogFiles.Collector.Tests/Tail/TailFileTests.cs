@@ -87,6 +87,25 @@ public sealed class TailFileTests : IDisposable
     }
 
     [Fact]
+    public async Task PartialLine_WrittenWhileTailing_WaitsForItsLineBreak()
+    {
+        // Arrange - a buffered logger flushes half a line, and the rest a while later
+        var file = CreateEmptyFile("app.log");
+        var received = new ConcurrentQueue<TailLine>();
+        StartTail(file, received.Enqueue);
+
+        // Act
+        await File.AppendAllTextAsync(file.FullName, "first half", CancellationToken);
+        await Task.Delay(2_500, CancellationToken);
+        await File.AppendAllTextAsync(file.FullName, " second half" + Environment.NewLine, CancellationToken);
+
+        // Assert
+        (await WaitUntil(() => !received.IsEmpty)).Should().BeTrue();
+        await Task.Delay(300, CancellationToken);
+        received.Select(x => x.Line).Should().Equal("first half second half");
+    }
+
+    [Fact]
     public async Task PartialLine_IsRaisedWhenTheFileStopsGrowing()
     {
         // Arrange - a last line without a line break, that the logger won't finish

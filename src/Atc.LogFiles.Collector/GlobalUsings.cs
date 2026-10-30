@@ -1,3 +1,4 @@
+global using System.Buffers;
 global using System.Collections.Concurrent;
 global using System.Globalization;
 global using System.Text;

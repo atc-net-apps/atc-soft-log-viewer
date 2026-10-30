@@ -7,8 +7,9 @@ namespace Atc.LogFiles.Collector.Tail;
 /// File system notifications and a slow backup poll both only request a read; at most one read runs at a time,
 /// and it returns when the new content has been read, so an idle tailed file does not hold a thread.
 /// A line is raised when its line break has been written, and a truncated or replaced file is read from the start.
-/// A last line without a line break is raised once the file has stopped growing for <see cref="PartialLineQuietPeriod"/>,
-/// so a file that ends without one still shows its last line.
+/// A last line without a line break that was already in the file when tailing started is raised once the file has
+/// stopped growing for <see cref="PartialLineQuietPeriod"/>, so a file that ends without one still shows its last line.
+/// A partial line written while tailing waits for its line break: buffered loggers flush in the middle of a line.
 /// </remarks>
 public class TailFile : IDisposable
 {
@@ -19,13 +20,16 @@ public class TailFile : IDisposable
     private readonly FileInfo file;
     private readonly FileSystemWatcher fileWatcher;
     private readonly Timer pollTimer;
-    private readonly MemoryStream partialLine = new();
+
+    // Not disposable on purpose: a read on a timer thread may still run while the tail is disposed
+    private readonly ArrayBufferWriter<byte> partialLine = new();
     private readonly byte[] readBuffer = new byte[64 * 1024];
     private long offset;
     private long? pendingStartOffset;
     private string? renamedToPath;
     private long numberOfLines;
     private long lastGrowthTicks;
+    private long lengthAtStart;
     private int isReading;
     private int isReadRequested;
     private int isResetRequested;
@@ -65,7 +69,8 @@ public class TailFile : IDisposable
     {
         // Start where the caller stopped reading, so lines written in between are not skipped
         file.Refresh();
-        offset = pendingStartOffset ?? (file.Exists ? file.Length : 0);
+        lengthAtStart = file.Exists ? file.Length : 0;
+        offset = pendingStartOffset ?? lengthAtStart;
         pendingStartOffset = null;
 
         isPaused = false;
@@ -114,7 +119,6 @@ public class TailFile : IDisposable
             fileWatcher.Error -= OnWatcherError;
             fileWatcher.Dispose();
             pollTimer.Dispose();
-            partialLine.Dispose();
         }
 
         isDisposed = true;
@@ -243,7 +247,9 @@ public class TailFile : IDisposable
 
     private void RaisePartialLineWhenQuiet()
     {
-        if (partialLine.Length > 0 &&
+        // Only a line that was there before tailing started; one written since waits for its line break
+        if (partialLine.WrittenCount > 0 &&
+            offset - partialLine.WrittenCount < lengthAtStart &&
             Environment.TickCount64 - lastGrowthTicks >= (long)PartialLineQuietPeriod.TotalMilliseconds)
         {
             RaisePartialLine();
@@ -255,7 +261,7 @@ public class TailFile : IDisposable
     /// </summary>
     private void RaisePartialLine()
     {
-        if (partialLine.Length > 0)
+        if (partialLine.WrittenCount > 0)
         {
             RaiseLine(ReadOnlySpan<byte>.Empty);
         }
@@ -287,15 +293,15 @@ public class TailFile : IDisposable
     private void RaiseLine(ReadOnlySpan<byte> lineBytes)
     {
         string line;
-        if (partialLine.Length == 0)
+        if (partialLine.WrittenCount == 0)
         {
             line = Encoding.UTF8.GetString(lineBytes);
         }
         else
         {
             partialLine.Write(lineBytes);
-            line = Encoding.UTF8.GetString(partialLine.GetBuffer(), 0, (int)partialLine.Length);
-            partialLine.SetLength(0);
+            line = Encoding.UTF8.GetString(partialLine.WrittenSpan);
+            partialLine.ResetWrittenCount();
         }
 
         line = line.TrimEnd('\r');
@@ -310,7 +316,8 @@ public class TailFile : IDisposable
     private void ResetToStartOfFile()
     {
         offset = 0;
+        lengthAtStart = 0;
         numberOfLines = 0;
-        partialLine.SetLength(0);
+        partialLine.ResetWrittenCount();
     }
 }
