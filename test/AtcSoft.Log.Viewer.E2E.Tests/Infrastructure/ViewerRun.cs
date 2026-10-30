@@ -1,14 +1,14 @@
 namespace AtcSoft.Log.Viewer.E2E.Infrastructure;
 
 /// <summary>
-/// ATC Log Viewer started with a data folder of its own below the run folder, so the user's
+/// AtcSoft Log Viewer started with a data folder of its own below the run folder, so the user's
 /// profiles and recent files are never read or changed. With a log folder, it gets a profile
 /// for that folder as its last used profile, and opens it at start, the way a user opens it
 /// again: no folder dialog is needed.
 /// </summary>
 internal sealed class ViewerRun : IDisposable
 {
-    public const string MainWindowTitle = "ATC Log.Viewer";
+    public const string MainWindowTitle = "AtcSoft Log Viewer";
 
     /// <summary>
     /// The status bar count of the entries collected (all, before filtering).

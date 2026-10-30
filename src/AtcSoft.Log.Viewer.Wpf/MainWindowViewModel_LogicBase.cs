@@ -17,7 +17,7 @@ public partial class MainWindowViewModel
         if (latest is not null &&
             latest.IsNewerThan(WpfApp.CurrentVersion))
         {
-            NewVersionIsAvailable = $"Version {latest.Version.ToString(3)} of ATC Log Viewer is available";
+            NewVersionIsAvailable = $"Version {latest.Version.ToString(3)} of AtcSoft Log Viewer is available";
         }
     }
 

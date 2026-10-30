@@ -16,7 +16,7 @@
     xmlns:userControls="clr-namespace:AtcSoft.Log.Viewer.Wpf.UserControls"
     xmlns:valueConverters="clr-namespace:AtcSoft.Log.Viewer.Wpf.ValueConverters"
     xmlns:wpf="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
-    Title="..:: ATC Log.Viewer ::.."
+    Title="AtcSoft Log Viewer"
     Width="1500"
     Height="1000"
     MinWidth="700"

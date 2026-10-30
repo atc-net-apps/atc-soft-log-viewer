@@ -1,11 +1,11 @@
-# 📜 ATC Log Viewer
+# 📜 AtcSoft Log Viewer
 
 [![Build and test](https://img.shields.io/github/actions/workflow/status/atc-net-apps/atc-soft-log-viewer/build.yml?branch=main&label=build&logo=github&style=for-the-badge)](https://github.com/atc-net-apps/atc-soft-log-viewer/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=for-the-badge)](LICENSE)
 [![.NET 10](https://img.shields.io/badge/.NET-10-512BD4.svg?logo=dotnet&style=for-the-badge)](https://dotnet.microsoft.com/)
 ![Windows](https://img.shields.io/badge/platform-Windows-0078D4.svg?style=for-the-badge)
 
-ATC Log Viewer (`AtcSoft.Log.Viewer`) is a free, open source Windows app for reading log files from **log4net**, **NLog** and **Serilog**. It follows files live while they are written, filters, highlights and shows charts.
+AtcSoft Log Viewer (`AtcSoft.Log.Viewer`) is a free, open source Windows app for reading log files from **log4net**, **NLog** and **Serilog**. It follows files live while they are written, filters, highlights and shows charts.
 
 > 🚚 **Moved here:** this repo replaces the retired `atc-net/atc-logviewer`. The parsing is done by the `Atc.LogFiles.Collector` and `Atc.LogFiles.Analyzer` libraries in this repo - see [how to use them](docs/log-files-libraries.md).
 

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    End-to-end UI tests: they start ATC Log Viewer and the sample AppHost (Aspire), drive the
+    End-to-end UI tests: they start AtcSoft Log Viewer and the sample AppHost (Aspire), drive the
     viewer through UI Automation (FlaUI) and the simulator page in Edge (Playwright), and fail
     on a crash dialog, a step that breaks or entries that never show. They open windows, so
     they skip unless ATCSOFT_E2E=1 (CI runs every test project). See docs/e2e-tests.md.

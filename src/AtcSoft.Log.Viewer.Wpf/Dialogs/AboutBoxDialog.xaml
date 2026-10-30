@@ -6,7 +6,7 @@
     xmlns:atcDialogs="clr-namespace:Atc.Wpf.Theming.Themes.Dialogs;assembly=Atc.Wpf.Theming"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="About ATC Log Viewer"
+    Title="About AtcSoft Log Viewer"
     Width="350"
     Height="220"
     Background="{DynamicResource AtcApps.Brushes.Dialog.Background}"
@@ -53,12 +53,12 @@
                 Margin="20"
                 Orientation="Vertical"
                 Spacing="20">
-                <TextBlock FontWeight="Bold" Text="ATC Log Viewer" />
+                <TextBlock FontWeight="Bold" Text="AtcSoft Log Viewer" />
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Version: " />
                     <TextBlock x:Name="VersionTextBlock" Text="1.0.0.0" />
                 </StackPanel>
-                <TextBlock Text="© 2024 ATC" />
+                <TextBlock Text="© 2026 atc-net-apps" />
             </atc:UniformSpacingPanel>
         </atc:UniformSpacingPanel>
 

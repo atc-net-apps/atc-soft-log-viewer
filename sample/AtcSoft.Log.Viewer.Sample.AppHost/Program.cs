@@ -1,4 +1,4 @@
-// Starts the log simulator and ATC Log Viewer. The simulator writes to sample/output (git-ignored); open that folder in the viewer.
+// Starts the log simulator and AtcSoft Log Viewer. The simulator writes to sample/output (git-ignored); open that folder in the viewer.
 // Settings (for the end-to-end tests): LogFolder moves the folder, StartViewer=false leaves the viewer out,
 // ViewerDataPath gives the viewer a data folder of its own (profiles, recent files).
 var builder = DistributedApplication.CreateBuilder(args);

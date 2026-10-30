@@ -1,6 +1,6 @@
 # 🖥️ UI tests (end-to-end)
 
-The project `test/AtcSoft.Log.Viewer.E2E.Tests` starts the real ATC Log Viewer and the sample Aspire AppHost, and drives them the way a user would:
+The project `test/AtcSoft.Log.Viewer.E2E.Tests` starts the real AtcSoft Log Viewer and the sample Aspire AppHost, and drives them the way a user would:
 
 - 🪟 **The viewer** through UI Automation ([FlaUI](https://github.com/FlaUI/FlaUI)). Only UI Automation patterns are used (invoke, toggle, select): no mouse moves and no keystrokes, so you can keep working while the tests run.
 - 🌐 **The simulator page** in Edge, headless ([Playwright](https://playwright.dev/dotnet/)). It uses the Edge that is installed, so no browser download is needed.

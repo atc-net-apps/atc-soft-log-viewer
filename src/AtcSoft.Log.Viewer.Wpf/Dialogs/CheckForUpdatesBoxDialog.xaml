@@ -54,7 +54,7 @@
             Margin="20"
             Orientation="Vertical"
             Spacing="12">
-            <TextBlock FontWeight="Bold" Text="ATC Log Viewer" />
+            <TextBlock FontWeight="Bold" Text="AtcSoft Log Viewer" />
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Current version: " />
                 <TextBlock x:Name="CurrentVersionTextBlock" />
