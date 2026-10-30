@@ -31,6 +31,7 @@ They take a bit over a minute. Stop the sample AppHost in Visual Studio first: t
 | 📭 `Empty_Folder_Shows_A_Message_Not_A_Crash` | Opens a folder with no log files | The "no valid log files" message does not show, or the app crashes |
 | 🎛️ `Simulator_Page_Controls_The_Writing` | Start, a burst, a roll and Stop on the simulator page, started by the AppHost without the viewer | The page does not change as expected, or it logs an error, a failed request or a page error |
 | 🚀 `Viewer_Starts_From_The_AppHost_With_A_Window` | Starts the AppHost with the viewer, as F5 does | The viewer's window does not show |
+| 🔔 `A_Newer_Release_Shows_The_Notice_And_The_Dialog_Offers_The_Download` | Points the update check at a release v99.0.0 the test writes (`ATCSOFT_LOGVIEWER_RELEASE_URL`), presses the notice and waits for **Download latest** to be enabled. It doesn't press it: that opens the browser | The notice doesn't show, the dialog doesn't open, or it doesn't offer the download |
 
 Every check for a crash also fails on a plain Windows message box: the app shows its errors in its own dialog style (`ErrorDialog`, an Atc.Wpf `InfoDialogBox`).
 
@@ -40,6 +41,7 @@ Each live test opens its folder through a profile with no log format set. The vi
 
 - 💾 **Your data:** the viewer gets its own data folder (`ATCSOFT_LOGVIEWER_DATA_PATH`), so your profiles and recent files are not read or changed. The copy of data from earlier versions is skipped for such a folder.
 - 📁 **`sample/output`:** the AppHost writes to a folder of the test run (`LogFolder=...`).
+- 🌐 **GitHub:** the update check at start is off (`ATCSOFT_LOGVIEWER_SKIP_UPDATE_CHECK=1`), or reads a local release file the test wrote.
 - ⚙️ **Your settings:** `Application__*` and `OTEL_*` variables of your own environment are not passed to the viewer.
 
 Each run writes to `%TEMP%\AtcSoft.Log.Viewer.E2E\<time>`: the log folders, the viewer's data and output, and, when a step fails, a dump of the window's UI Automation tree. The folder stays after the run, so you can see what happened.

@@ -31,7 +31,8 @@ internal sealed class ViewerRun : IDisposable
         string name,
         string? logFolder = null,
         LogFileCollectorType collectorType = LogFileCollectorType.None,
-        string? workingDirectory = null)
+        string? workingDirectory = null,
+        string? releaseFile = null)
     {
         DataFolder = E2ESettings.NewFolder(name + "-data");
         if (logFolder is not null)
@@ -39,15 +40,26 @@ internal sealed class ViewerRun : IDisposable
             WriteLastUsedProfile(logFolder, collectorType);
         }
 
+        var environment = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [AppDataPaths.DataPathVariable] = DataFolder,
+            ["Application__OpenRecentFileOnStartup"] = "true",
+        };
+
+        // Never GitHub: either no check at start, or a release the test wrote
+        if (releaseFile is null)
+        {
+            environment[UpdateCheck.SkipVariable] = "1";
+        }
+        else
+        {
+            environment[UpdateCheck.ReleaseUrlVariable] = releaseFile;
+        }
+
         process = ChildProcess.Start(
             E2ESettings.ViewerExe,
             [],
-            new Dictionary<string, string>(StringComparer.Ordinal)
-            {
-                [AppDataPaths.DataPathVariable] = DataFolder,
-                [UpdateCheck.SkipVariable] = "1",
-                ["Application__OpenRecentFileOnStartup"] = "true",
-            },
+            environment,
             Path.Combine(DataFolder, "viewer-output.log"),
             workingDirectory);
 

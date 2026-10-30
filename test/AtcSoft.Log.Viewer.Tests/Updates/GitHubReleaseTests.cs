@@ -126,6 +126,61 @@ public sealed class GitHubReleaseTests
     }
 
     [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("not a url")]
+    [InlineData("ftp://example.com/release.json")]
+    public void GetLatestReleaseUrl_WithoutAValidOverride_IsGitHub(
+        string? value)
+        => UpdateCheck.GetLatestReleaseUrl(value).Should().Be(UpdateCheck.LatestReleaseApiUrl);
+
+    [Fact]
+    public void GetLatestReleaseUrl_WithAFile_IsTheFile()
+    {
+        // Arrange - the UI tests point the check at a release they wrote
+        var file = Path.Combine(Path.GetTempPath(), "release.json");
+
+        // Act
+        var actual = UpdateCheck.GetLatestReleaseUrl(file);
+
+        // Assert
+        actual.Should().Be(new Uri(file));
+    }
+
+    [Fact]
+    public async Task GetLatestAsync_FromAFile_ReadsTheRelease()
+    {
+        // Arrange
+        var file = Path.Combine(Path.GetTempPath(), $"release-{Guid.NewGuid():N}.json");
+        await File.WriteAllTextAsync(file, ReleaseJson("v9.0.0", ("AtcSoft.Log.Viewer.Installer.msi", InstallerDownload)), TestContext.Current.CancellationToken);
+        using var sut = new GitHubReleaseService(new Uri(file));
+
+        try
+        {
+            // Act
+            var actual = await sut.GetLatestAsync(TestContext.Current.CancellationToken);
+
+            // Assert
+            actual!.Version.Should().Be(new Version(9, 0, 0));
+            actual.DownloadUrl.Should().Be(new Uri(InstallerDownload));
+        }
+        finally
+        {
+            File.Delete(file);
+        }
+    }
+
+    [Fact]
+    public async Task GetLatestAsync_FromAMissingFile_IsNull()
+    {
+        // Arrange
+        using var sut = new GitHubReleaseService(new Uri(Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}.json")));
+
+        // Act & Assert
+        (await sut.GetLatestAsync(TestContext.Current.CancellationToken)).Should().BeNull();
+    }
+
+    [Theory]
     [InlineData(null, false)]
     [InlineData("", false)]
     [InlineData("0", false)]

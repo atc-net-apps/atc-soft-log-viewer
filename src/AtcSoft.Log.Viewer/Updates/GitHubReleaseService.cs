@@ -7,9 +7,19 @@ public sealed class GitHubReleaseService : IGitHubReleaseService, IDisposable
 {
     private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
     private readonly HttpClient httpClient;
+    private readonly Uri releaseUrl;
 
     public GitHubReleaseService()
+        : this(UpdateCheck.GetLatestReleaseUrl(Environment.GetEnvironmentVariable(UpdateCheck.ReleaseUrlVariable)))
     {
+    }
+
+    /// <param name="releaseUrl">Where to read the latest release: the GitHub API, or a local file.</param>
+    public GitHubReleaseService(Uri releaseUrl)
+    {
+        ArgumentNullException.ThrowIfNull(releaseUrl);
+
+        this.releaseUrl = releaseUrl;
         httpClient = new HttpClient { Timeout = RequestTimeout };
         httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("AtcSoft-LogViewer");
     }
@@ -20,11 +30,16 @@ public sealed class GitHubReleaseService : IGitHubReleaseService, IDisposable
     {
         try
         {
-            var json = await httpClient
-                .GetStringAsync(UpdateCheck.LatestReleaseApiUrl, cancellationToken)
-                .ConfigureAwait(false);
+            var json = releaseUrl.IsFile
+                ? await File.ReadAllTextAsync(releaseUrl.LocalPath, cancellationToken).ConfigureAwait(false)
+                : await httpClient.GetStringAsync(releaseUrl, cancellationToken).ConfigureAwait(false);
 
             return GitHubRelease.Parse(json, UpdateCheck.InstallerAssetName);
+        }
+        catch (IOException)
+        {
+            // A release file that isn't there
+            return null;
         }
         catch (HttpRequestException)
         {
