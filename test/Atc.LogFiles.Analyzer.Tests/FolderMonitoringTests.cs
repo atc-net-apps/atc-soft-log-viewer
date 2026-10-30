@@ -101,6 +101,69 @@ public sealed class FolderMonitoringTests : IDisposable
     }
 
     [Fact]
+    public async Task FileCreatedBeforeToday_IsFollowed()
+    {
+        // Arrange - a service that writes to the same file across midnight
+        var file = await WriteLines("app.log", "written yesterday");
+        File.SetCreationTime(file.FullName, DateTime.Now.AddDays(-1));
+        await StartWatching();
+
+        // Act
+        await AppendLines(file, "written today");
+
+        // Assert
+        (await WaitForMessages("written yesterday", "written today")).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task FileCreatedBeforeTheDaysBack_ButStillWrittenTo_IsReadAndFollowed()
+    {
+        // Arrange - the file is older than the days back, but its lines are recent
+        var file = await WriteLines("app.log", "written recently");
+        File.SetCreationTime(file.FullName, DateTime.Now.AddDays(-30));
+        await StartWatching();
+
+        // Act
+        await AppendLines(file, "written now");
+
+        // Assert
+        (await WaitForMessages("written recently", "written now")).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task FileNotWrittenWithinTheDaysBack_IsNotRead()
+    {
+        // Arrange
+        var file = await WriteLines("app.log", "old");
+        File.SetCreationTime(file.FullName, DateTime.Now.AddDays(-30));
+        File.SetLastWriteTime(file.FullName, DateTime.Now.AddDays(-30));
+        await WriteLines("app-2.log", "recent");
+
+        // Act
+        await StartWatching();
+
+        // Assert
+        received.Select(x => x.MessageFull).Should().Equal("recent");
+    }
+
+    [Fact]
+    public async Task RollByRename_OfAFileCreatedBeforeToday_TheNewFileIsFollowed()
+    {
+        // Arrange - Windows may give a file created soon after a rename the old file's creation time (NTFS tunneling)
+        var file = await WriteLines("app.log", "before roll");
+        File.SetCreationTime(file.FullName, DateTime.Now.AddDays(-1));
+        await StartWatching();
+
+        // Act
+        File.Move(file.FullName, Path.Combine(directory.FullName, "app.1.log"));
+        await WriteLines("app.log", "after roll 1");
+        await AppendLines(file, "after roll 2");
+
+        // Assert
+        (await WaitForMessages("after roll 1", "after roll 2")).Should().BeTrue();
+    }
+
+    [Fact]
     public async Task EntriesWithTheSameTimeStamp_KeepTheirLineOrder()
     {
         // Arrange - a burst where many entries get the same time stamp

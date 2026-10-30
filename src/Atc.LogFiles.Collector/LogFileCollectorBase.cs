@@ -147,7 +147,7 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
     {
         ArgumentNullException.ThrowIfNull(fileInfo);
 
-        if (!fileInfo.IsCreatedToday() ||
+        if (!fileInfo.IsRecentlyWritten() ||
             monitoredFiles.ContainsKey(fileInfo.FullName))
         {
             return;
@@ -260,7 +260,8 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
         LogFileCollectorConfiguration config,
         IEnumerable<string> logExtensions)
     {
-        var createdStartDate = config.MaxDaysBack == 0
+        // By the last write: a file created long ago that is still written to has recent lines
+        var writtenStartDate = config.MaxDaysBack == 0
             ? DateTime.Now.AddDays(-365)
             : DateTime.Now.AddDays(-config.MaxDaysBack);
 
@@ -291,7 +292,7 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
         }
 
         return files
-            .Where(f => f.CreationTime >= createdStartDate && f.CreationTime <= DateTime.Now)
+            .Where(f => f.LastWriteTime >= writtenStartDate)
             .OrderBy(x => x.CreationTime)
             .ToList();
     }
@@ -334,7 +335,7 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
         CancellationToken cancellationToken)
     {
         // A followed file may have a line the logger is still writing; leave it to the tail
-        var willMonitor = useMonitoring && file.IsCreatedToday() && !IsFileMonitoring(file);
+        var willMonitor = useMonitoring && file.IsRecentlyWritten() && !IsFileMonitoring(file);
         var (isSuccessFul, lastLineNumber, endOffset) = await ReadAndParseLinesToEnd(
                 file,
                 stopBeforeUnfinishedLine: willMonitor,
