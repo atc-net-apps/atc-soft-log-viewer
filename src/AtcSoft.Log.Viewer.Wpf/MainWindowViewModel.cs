@@ -65,6 +65,7 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
             .FilterVersion;
 
         this.logAnalyzer.CollectedEntries += OnCollectedEntries;
+        this.logAnalyzer.NotReadChanged += OnNotReadChanged;
 
         if (ApplicationOptions.OpenRecentFileOnStartup &&
             RecentOpenFiles.Count > 0)
@@ -352,6 +353,11 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
             }
         });
     }
+
+    private void OnNotReadChanged(
+        object? sender,
+        EventArgs e)
+        => Application.Current?.Dispatcher.BeginInvoke(() => CountLogEntriesStatsAndSend());
 
     private void OnCollectedEntries(
         object? sender,

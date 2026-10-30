@@ -12,6 +12,8 @@ namespace AtcSoft.Log.Viewer.E2E;
 [Collection(E2ETestGroup.Name)]
 public sealed class LiveFolderTests
 {
+    private const string NotReadId = "NotRead";
+
     private static readonly TimeSpan CountTimeout = TimeSpan.FromSeconds(60);
 
     [Fact]
@@ -157,6 +159,50 @@ public sealed class LiveFolderTests
         scrollDuringFlow.Should().BeGreaterThan(90, "auto-scroll keeps the list near the newest entries while they arrive");
         scrollAfterFlow.Should().BeGreaterThan(99.9, "auto-scroll ends at the newest entry");
         run.App.ShouldNotHaveCrashed();
+    }
+
+    [Fact]
+    public void Lines_And_Files_In_Another_Format_Show_A_Warning()
+    {
+        E2ESettings.SkipUnlessEnabled();
+
+        var folder = E2ESettings.NewFolder("other-format-logs");
+        using var simulator = CreateSimulator(folder);
+        simulator.Burst(100);
+
+        using var run = new ViewerRun("other-format", folder);
+        var app = run.App;
+        run.WaitForCount(ViewerRun.CollectedCountId, 100, CountTimeout);
+        run.Main.FindFirstDescendant(app.Conditions.ByAutomationId(NotReadId)).Should().BeNull("everything was read so far");
+
+        // A logger whose layout changed while it kept writing to the same file
+        File.AppendAllLines(
+            Path.Combine(folder, "orders.log"),
+            [.. Enumerable.Range(1, 3).Select(i => $"{DateTime.Now:yyyy-MM-dd HH:mm:ss,fff} [8] INFO  Worker - log4net line {i}")]);
+
+        // The simulator sends a new format to new files
+        simulator.UpdateSettings(new SimulatorSettings(Format: LogFormat.Log4Net, FileCount: 2, RollMode: RollMode.Rename));
+        simulator.Burst(10);
+
+        var warning = app.FindById(run.Main, NotReadId, TimeSpan.FromSeconds(30));
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(30);
+        string text;
+        do
+        {
+            text = warning.Properties.Name.ValueOrDefault ?? string.Empty;
+            if (text.Contains("3 lines", StringComparison.Ordinal) && text.Contains("2 files", StringComparison.Ordinal))
+            {
+                break;
+            }
+
+            DesktopApp.Settle(TimeSpan.FromMilliseconds(250));
+        }
+        while (DateTime.UtcNow < deadline);
+
+        TestContext.Current.TestOutputHelper?.WriteLine($"Status bar: {text}");
+        text.Should().Be("Not read: 3 lines, 2 files");
+        run.ReadCount(ViewerRun.CollectedCountId).Should().Be(100, "lines in another format are not read as entries");
+        app.ShouldNotHaveCrashed();
     }
 
     [Fact]

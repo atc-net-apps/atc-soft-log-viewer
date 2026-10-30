@@ -180,5 +180,8 @@ public partial class MainWindowViewModel
                 TotalDebugCount: logStatistics.DebugCount,
                 TraceCount: displayedLogLevelCounts[(int)LogLevel.Trace],
                 TotalTraceCount: logStatistics.TraceCount));
+
+        var notRead = logAnalyzer.GetNotRead();
+        Messenger.Default.Send(new NotReadMessage(notRead.ToShortText(), notRead.ToDetails()));
     }
 }
