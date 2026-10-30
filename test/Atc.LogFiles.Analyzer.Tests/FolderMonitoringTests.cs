@@ -118,6 +118,26 @@ public sealed class FolderMonitoringTests : IDisposable
         received.Select(x => x.MessageFull).Should().Equal("started", "last before roll", "first after roll");
     }
 
+    [Fact(Skip = "LV-61: the archive copy is collected as a new file, so the lines before the roll arrive twice")]
+    public async Task RollByCopyAndTruncate_NothingIsLostOrDuplicated()
+    {
+        // Arrange
+        var file = await WriteLines("app.log", "started");
+        await StartWatching();
+        await AppendLines(file, "last before roll");
+        (await WaitForMessages("last before roll")).Should().BeTrue();
+
+        // Act - the logger copies the file to an archive name, empties it and goes on writing
+        File.Copy(file.FullName, Path.Combine(directory.FullName, "app.1.log"));
+        await File.WriteAllTextAsync(file.FullName, string.Empty, CancellationToken);
+        await AppendLines(file, "first after roll");
+
+        // Assert
+        (await WaitForMessages("first after roll")).Should().BeTrue();
+        await Task.Delay(1_500, CancellationToken);
+        received.Select(x => x.MessageFull).Should().Equal("started", "last before roll", "first after roll");
+    }
+
     [Fact]
     public async Task DeletedAndRecreatedFile_IsReadFromTheStart()
     {

@@ -15,6 +15,9 @@ namespace Atc.LogFiles.Collector.Tail;
 /// between a notification and the read. The first bytes of the file are kept, so a read that finds another file at
 /// the path does not read it from the old position: it waits for the rename or delete notification, which first
 /// reads the rest of the old file. Without one (truncated, or replaced by a copy), the file is read from the start.
+/// Known limits: a new file that starts with the same 64 bytes as the old one (a fixed header) is not seen as another
+/// file; and when the watcher drops the rename notification (a buffer overflow in a burst), the new file is read from
+/// the start, but the rest of the old file is lost.
 /// </para>
 /// </remarks>
 public class TailFile : IDisposable
