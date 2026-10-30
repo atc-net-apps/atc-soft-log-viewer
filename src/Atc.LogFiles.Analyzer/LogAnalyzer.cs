@@ -24,6 +24,12 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
     private readonly Dictionary<string, FileNotRead> filesNotRead = new(StringComparer.OrdinalIgnoreCase);
     private readonly Timer flushTimer;
     private bool isFlushScheduled;
+
+    /// <summary>
+    /// Whether <see cref="logEntries"/> is in <see cref="LogEntryOrder"/>. Live entries mostly arrive in
+    /// order; files read in parallel don't, and are sorted once, when a filter needs them.
+    /// </summary>
+    private bool isLogEntriesInOrder = true;
     private bool isNotReadChanged;
     private long linesNotReadCount;
     private long filterVersion;
@@ -182,13 +188,10 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
             logFilter = filter;
             version = ++filterVersion;
             pendingEntries.Clear();
-            snapshot = [.. logEntries];
+            snapshot = SnapshotInOrder();
         }
 
-        var entries = snapshot
-            .Where(entry => IsMatch(entry, filter))
-            .Order(LogEntryOrder.Instance)
-            .ToArray();
+        var entries = FindMatches(snapshot, filter);
 
         return new LogEntryBatch(entries, version);
     }
@@ -218,14 +221,11 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
         AtcLogEntry[] snapshot;
         lock (syncLock)
         {
-            snapshot = [.. logEntries];
+            snapshot = SnapshotInOrder();
         }
 
         var filter = logFilter;
-        return snapshot
-            .Where(entry => IsMatch(entry, filter))
-            .Order(LogEntryOrder.Instance)
-            .ToArray();
+        return FindMatches(snapshot, filter);
     }
 
     public LogStatistics GetLogStatistics()
@@ -265,6 +265,7 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
             filesNotRead.Clear();
             linesNotReadCount = 0;
             logEntries.Clear();
+            isLogEntriesInOrder = true;
             pendingEntries.Clear();
             sourceSystems.Clear();
             Interlocked.Increment(ref sourceSystemsVersion);
@@ -284,6 +285,39 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
     {
         flushTimer.Dispose();
         fileSystemWatcher?.Dispose();
+    }
+
+    /// <summary>
+    /// Copies the entries in order, sorting them first if needed. Call it inside <see cref="syncLock"/>.
+    /// </summary>
+    private AtcLogEntry[] SnapshotInOrder()
+    {
+        if (!isLogEntriesInOrder)
+        {
+            logEntries.Sort(LogEntryOrder.Instance);
+            isLogEntriesInOrder = true;
+        }
+
+        return [.. logEntries];
+    }
+
+    private static AtcLogEntry[] FindMatches(
+        AtcLogEntry[] entries,
+        LogFilter filter)
+    {
+        // Matches are written over the front of the snapshot, which is a copy only this call uses
+        var count = 0;
+        foreach (var entry in entries)
+        {
+            if (IsMatch(entry, filter))
+            {
+                entries[count++] = entry;
+            }
+        }
+
+        return count == entries.Length
+            ? entries
+            : entries[..count];
     }
 
     private static bool IsMatch(
@@ -439,6 +473,13 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
         var logEntry = e.Entry;
         lock (syncLock)
         {
+            if (isLogEntriesInOrder &&
+                logEntries.Count > 0 &&
+                LogEntryOrder.Instance.Compare(logEntries[^1], logEntry) > 0)
+            {
+                isLogEntriesInOrder = false;
+            }
+
             logEntries.Add(logEntry);
             logLevelCounts[(int)logEntry.LogLevel]++;
             if (sourceSystems.Add(logEntry.SourceSystem))

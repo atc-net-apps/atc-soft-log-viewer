@@ -31,6 +31,43 @@ public class AnalyzerBenchmarks
         liveEntries = SampleLogFactory.CreateEntries(LiveEntryCount);
     }
 
+    [IterationSetup(Target = nameof(ApplyFilter_AfterAParallelLoad))]
+    public void ParallelLoadSetup()
+    {
+        collector = new FakeFileCollector();
+        analyzer = new Analyzer.LogAnalyzer(collector, collector, collector);
+
+        // Four files read at the same time: each file's entries in order, the files in turns of 1,000
+        var entries = SampleLogFactory.CreateEntries(LoadedEntryCount);
+        foreach (var chunk in entries
+                     .Select((entry, index) => (entry, index))
+                     .GroupBy(x => x.index % 4)
+                     .SelectMany(file => file.Chunk(1_000).Select((part, turn) => (turn, part)))
+                     .OrderBy(x => x.turn))
+        {
+            foreach (var (entry, _) in chunk.part)
+            {
+                collector.Raise(entry);
+            }
+        }
+
+        collector.RaiseFilesDone();
+        analyzer.ApplyFilter(AllLevels(string.Empty));
+    }
+
+    private static LogFilter AllLevels(string includeText)
+        => new(
+            LogLevelTrace: true,
+            LogLevelDebug: true,
+            LogLevelInfo: true,
+            LogLevelWarning: true,
+            LogLevelError: true,
+            LogLevelCritical: true,
+            IncludeText: includeText,
+            DateTimeFrom: null,
+            DateTimeTo: null,
+            SourceSystem: string.Empty);
+
     [IterationCleanup]
     public void IterationCleanup()
         => analyzer.Dispose();
@@ -52,6 +89,15 @@ public class AnalyzerBenchmarks
 
         return total;
     }
+
+    /// <summary>
+    /// A filter change after the folder is loaded: the files were read in parallel, so their entries
+    /// arrived interleaved, and the first filter after the load has already run.
+    /// </summary>
+    /// <returns>The number of matching entries.</returns>
+    [Benchmark]
+    public int ApplyFilter_AfterAParallelLoad()
+        => analyzer.ApplyFilter(AllLevels("order")).Entries.Count;
 
     [Benchmark]
     public int GetFilteredLogEntries_WithText()

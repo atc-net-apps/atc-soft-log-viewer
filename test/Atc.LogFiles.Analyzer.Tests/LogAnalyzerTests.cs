@@ -154,6 +154,24 @@ public sealed class LogAnalyzerTests : IDisposable
     }
 
     [Fact]
+    public void ApplyFilter_EntriesThatArriveOutOfOrderAfterAFilter_AreInOrderInTheNextFilter()
+    {
+        // Arrange - files read in parallel deliver their entries interleaved
+        RaiseDefaultEntries();
+        sut.ApplyFilter(CreateFilter());
+        RaiseEntry(CreateEntry(10, LogLevel.Information, "late file, later"));
+        RaiseEntry(CreateEntry(-5, LogLevel.Information, "late file, earlier"));
+
+        // Act
+        var actual = sut.ApplyFilter(CreateFilter());
+
+        // Assert
+        actual.Entries.Should().HaveCount(9);
+        actual.Entries.Should().BeInAscendingOrder(x => x.TimeStamp);
+        actual.Entries[0].MessageFull.Should().Be("late file, earlier");
+    }
+
+    [Fact]
     public void SourceSystemsVersion_ChangesOnlyWhenANewSourceSystemAppears()
     {
         // Arrange
