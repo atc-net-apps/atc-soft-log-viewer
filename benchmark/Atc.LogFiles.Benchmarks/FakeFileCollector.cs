@@ -16,6 +16,9 @@ internal sealed class FakeFileCollector : ILog4NetFileCollector, INLogFileCollec
     public void Raise(AtcLogEntry entry)
         => CollectedEntry?.Invoke(this, new LogEntryEventArgs(entry));
 
+    public bool IsRootLine(string line)
+        => false;
+
     public void RaiseLineNotRead(string line)
         => LineNotRead?.Invoke(this, new LineNotReadEventArgs(new FileInfo("fake.log"), 1, line));
 

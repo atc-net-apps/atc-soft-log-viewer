@@ -15,6 +15,13 @@ public interface IFileCollector
 
     bool CanParseFileFormat(FileInfo file);
 
+    /// <summary>
+    /// Gets whether the line starts an entry in this collector's format.
+    /// </summary>
+    /// <param name="line">The line.</param>
+    /// <returns><see langword="true"/> when the line is a root line of this format.</returns>
+    bool IsRootLine(string line);
+
     Task CollectFile(
         FileInfo file,
         LogFileCollectorConfiguration config,

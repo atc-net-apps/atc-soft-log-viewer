@@ -57,10 +57,10 @@ public sealed record NotReadSummary(
         var sb = new StringBuilder();
         if (Lines.Count > 0)
         {
-            sb.AppendLine("These look like log lines, but are not in the format being read:");
+            sb.AppendLine("These lines are in another format:");
             foreach (var lines in Lines.Take(maxItems))
             {
-                sb.AppendLine(CultureInfo.InvariantCulture, $"• {Path.GetFileName(lines.FilePath)}: {Count(lines.Count, "line")}, the first is line {lines.FirstLineNumber.ToString("N0", CultureInfo.InvariantCulture)}:");
+                sb.AppendLine(CultureInfo.InvariantCulture, $"• {Path.GetFileName(lines.FilePath)}: {Count(lines.Count, "line")} ({lines.Format}), the first is line {lines.FirstLineNumber.ToString("N0", CultureInfo.InvariantCulture)}:");
                 sb.AppendLine(CultureInfo.InvariantCulture, $"    {Shorten(lines.FirstLine)}");
             }
 

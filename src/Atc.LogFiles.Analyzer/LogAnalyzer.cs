@@ -388,15 +388,45 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
         object? sender,
         LineNotReadEventArgs e)
     {
+        // Only lines another format can read: a message line that starts with a digit, or a line the
+        // logger is still writing, is not a line in another format
+        var format = FindOtherFormat(sender, e.Line);
+        if (format == LogFileCollectorType.None)
+        {
+            return;
+        }
+
         lock (syncLock)
         {
             var filePath = e.File.FullName;
             linesNotRead[filePath] = linesNotRead.TryGetValue(filePath, out var known)
                 ? known with { Count = known.Count + 1 }
-                : new LinesNotRead(filePath, 1, e.LineNumber, e.Line);
+                : new LinesNotRead(filePath, 1, e.LineNumber, e.Line, format);
             linesNotReadCount++;
             MarkNotReadChanged();
         }
+    }
+
+    private LogFileCollectorType FindOtherFormat(
+        object? sender,
+        string line)
+    {
+        if (!ReferenceEquals(sender, serilogFileCollector) && serilogFileCollector.IsRootLine(line))
+        {
+            return LogFileCollectorType.Serilog;
+        }
+
+        if (!ReferenceEquals(sender, nlogFileCollector) && nlogFileCollector.IsRootLine(line))
+        {
+            return LogFileCollectorType.NLog;
+        }
+
+        if (!ReferenceEquals(sender, log4NetFileCollector) && log4NetFileCollector.IsRootLine(line))
+        {
+            return LogFileCollectorType.Log4Net;
+        }
+
+        return LogFileCollectorType.None;
     }
 
     /// <summary>

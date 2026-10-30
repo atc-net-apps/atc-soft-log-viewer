@@ -26,6 +26,10 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
     /// </summary>
     protected abstract IReadOnlyCollection<string> DefaultLogExtensions { get; }
 
+    public bool IsRootLine(string line)
+        => line is not null &&
+           ParseRootLine(string.Empty, string.Empty, 0, line) is not null;
+
     public bool CanParseFileFormat(FileInfo file)
     {
         ArgumentNullException.ThrowIfNull(file);

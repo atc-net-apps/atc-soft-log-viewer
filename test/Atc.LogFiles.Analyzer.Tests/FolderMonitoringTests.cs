@@ -252,7 +252,28 @@ public sealed class FolderMonitoringTests : IDisposable
         lines.Count.Should().Be(2);
         lines.FirstLineNumber.Should().Be(2);
         lines.FirstLine.Should().EndWith("first in log4net");
+        lines.Format.Should().Be(LogFileCollectorType.Log4Net);
         sut.GetLogStatistics().LinesNotReadCount.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task LinesNoFormatCanRead_AreNotCountedAsNotRead()
+    {
+        // Arrange - a message line that starts with a digit, and a line the logger is still writing
+        var file = await WriteLines("app.log", "started");
+        await File.AppendAllTextAsync(
+            file.FullName,
+            "42 items failed validation" + Environment.NewLine + Line("next entry") + Environment.NewLine + "2026-10-30 00:0",
+            CancellationToken);
+
+        // Act
+        await StartWatching();
+        await Task.Delay(500, CancellationToken);
+
+        // Assert
+        (await WaitForMessages("next entry")).Should().BeTrue();
+        sut.GetLogStatistics().LinesNotReadCount.Should().Be(0);
+        sut.GetNotRead().IsEmpty.Should().BeTrue();
     }
 
     [Fact]

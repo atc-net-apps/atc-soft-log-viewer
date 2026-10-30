@@ -13,7 +13,7 @@ public sealed class NotReadSummaryTests
     {
         // Arrange
         var sut = new NotReadSummary(
-            [new LinesNotRead(@"C:\logs\orders.log", 5_810, 31, "x"), new LinesNotRead(@"C:\logs\payments.log", 1, 9, "y")],
+            [new LinesNotRead(@"C:\logs\orders.log", 5_810, 31, "x", LogFileCollectorType.Log4Net), new LinesNotRead(@"C:\logs\payments.log", 1, 9, "y", LogFileCollectorType.Log4Net)],
             [new FileNotRead(@"C:\logs\orders-1.log", LogFileCollectorType.Log4Net)]);
 
         // Act
@@ -33,7 +33,7 @@ public sealed class NotReadSummaryTests
     {
         // Arrange
         var sut = new NotReadSummary(
-            lineCount == 0 ? [] : [new LinesNotRead(@"C:\logs\orders.log", lineCount, 1, "x")],
+            lineCount == 0 ? [] : [new LinesNotRead(@"C:\logs\orders.log", lineCount, 1, "x", LogFileCollectorType.Log4Net)],
             [.. Enumerable.Range(1, fileCount).Select(i => new FileNotRead($@"C:\logs\other-{i}.log", LogFileCollectorType.NLog))]);
 
         // Act
@@ -48,7 +48,7 @@ public sealed class NotReadSummaryTests
     {
         // Arrange
         var sut = new NotReadSummary(
-            [new LinesNotRead(@"C:\logs\orders.log", 5_810, 31, "2026-10-30 00:08:20,678 [16] DEBUG Worker - Order 1")],
+            [new LinesNotRead(@"C:\logs\orders.log", 5_810, 31, "2026-10-30 00:08:20,678 [16] DEBUG Worker - Order 1", LogFileCollectorType.Log4Net)],
             [new FileNotRead(@"C:\logs\orders-1.log", LogFileCollectorType.Log4Net)]);
 
         // Act
@@ -56,8 +56,8 @@ public sealed class NotReadSummaryTests
 
         // Assert
         actual.Should().Be(
-            "These look like log lines, but are not in the format being read:" + NewLine +
-            "• orders.log: 5,810 lines, the first is line 31:" + NewLine +
+            "These lines are in another format:" + NewLine +
+            "• orders.log: 5,810 lines (Log4Net), the first is line 31:" + NewLine +
             "    2026-10-30 00:08:20,678 [16] DEBUG Worker - Order 1" + NewLine +
             NewLine +
             "These files are in another format:" + NewLine +
@@ -85,7 +85,7 @@ public sealed class NotReadSummaryTests
     public void ToDetails_LongLine_IsShortened()
     {
         // Arrange
-        var sut = new NotReadSummary([new LinesNotRead(@"C:\logs\orders.log", 1, 1, new string('x', 300))], []);
+        var sut = new NotReadSummary([new LinesNotRead(@"C:\logs\orders.log", 1, 1, new string('x', 300), LogFileCollectorType.Log4Net)], []);
 
         // Act
         var actual = sut.ToDetails();
