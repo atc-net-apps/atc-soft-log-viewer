@@ -8,7 +8,7 @@ The project `test/AtcSoft.Log.Viewer.E2E.Tests` starts the real ATC Log Viewer a
 
 ## ▶️ Run them
 
-The tests open windows on the desktop, so they skip unless `ATCSOFT_E2E=1`. CI runs every test project, and there they show as skipped.
+The tests open windows on the desktop, so they skip unless `ATCSOFT_E2E=1`. CI runs every test project, and there they show as skipped. The **UI tests (nightly)** workflow runs them every night at 02:00 UTC on a Windows runner, and on demand (**Run workflow**); when a test fails, it uploads the run folders as the `e2e-run` artifact.
 
 ```powershell
 dotnet build -c Release
