@@ -22,6 +22,7 @@ ATC Log Viewer (`AtcSoft.Log.Viewer`) is a free, open source Windows app for rea
 | | 🆕 **New files** | New files that show up in the folder are picked up |
 | | 🧾 **Multi-line entries** | Stack traces and other lines that belong to one entry stay together |
 | | ⬇️ **Auto scroll** | Keep the list scrolled to the newest entry, or turn it off to read |
+| | ⚠️ **Not read warning** | The status bar says when lines or files in the folder are in another format and were not read, for example "Not read: 3 lines, 2 files"; the tooltip names the files with an example line |
 | **Filter** | 🚦 **Severity** | Show or hide Trace, Debug, Info, Warning, Error and Critical |
 | | 🔍 **Text** | Show only entries whose message contains a text (press `Enter`; casing is ignored) |
 | | 📅 **Date range** | Show only entries between a **From** and a **To** time |

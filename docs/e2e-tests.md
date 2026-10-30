@@ -26,6 +26,7 @@ They take about a minute. Stop the sample AppHost in Visual Studio first: the te
 | 📂 `Follows_Appends_Rolls_Deletes_And_New_Files` | The simulator writes 1,000 entries, then appends, rolls by rename, deletes a rolled file and creates a file empty that gets its first line 3 s later | The status bar count is not exactly what was written (nothing lost, nothing twice) |
 | 💥 `Window_Keeps_Answering_During_A_Burst` | Writes 50,000 entries at once while it reads the status bar | A read takes 2 s or more, or the count is wrong |
 | 🌊 `Window_Keeps_Answering_At_5000_Entries_A_Second` | Writes 5,000 entries a second for 10 s with auto-scroll on, measures how fast the window answers, and reads how far the list is scrolled | A read takes 2 s or more, the count is wrong, or the list is not kept at the end |
+| ⚠️ `Lines_And_Files_In_Another_Format_Show_A_Warning` | Appends log4net lines to a Serilog file and lets the simulator start log4net files | The status bar does not say "Not read: 3 lines, 2 files", or the lines were read as entries |
 | 📭 `Empty_Folder_Shows_A_Message_Not_A_Crash` | Opens a folder with no log files | The "no valid log files" message does not show, or the app crashes |
 | 🎛️ `Simulator_Page_Controls_The_Writing` | Start, a burst, a roll and Stop on the simulator page, started by the AppHost without the viewer | The page does not change as expected, or it logs an error, a failed request or a page error |
 | 🚀 `Viewer_Starts_From_The_AppHost_With_A_Window` | Starts the AppHost with the viewer, as F5 does | The viewer's window does not show |
@@ -56,7 +57,7 @@ The steady-rate test found the freeze. Live entries are added to the list one by
 
 ## ✍️ Writing a new test
 
-- 🔎 Find elements by their text or an automation id (`AutomationProperties.AutomationId`). The status bar counts have the ids `CollectedCount` and `ShownCount`, and the list has `LogEntries`.
+- 🔎 Find elements by their text or an automation id (`AutomationProperties.AutomationId`). The status bar counts have the ids `CollectedCount` and `ShownCount`, the not-read warning `NotRead` (only there while something was not read), and the list has `LogEntries`.
 - 🌳 Call `app.DumpTree("label")` to see the UI Automation tree of every window. The Application menu, for example, is an unnamed `Menu` with the class `Backstage`.
 - 🧱 Use `SmokeSteps` for a walk through many dialogs, so one run reports every step that breaks.
 - 📋 The list is virtualized: UI Automation sees only the rows on the screen. Read counts from the status bar, not by counting rows.

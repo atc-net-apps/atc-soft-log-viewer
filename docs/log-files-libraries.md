@@ -56,6 +56,25 @@ var errors = analyzer.ApplyFilter(
 var statistics = analyzer.GetLogStatistics();
 ```
 
+## Lines and files in another format
+
+A folder is read in one format. Lines that look like the start of an entry (they start with a digit) but are not in that format are not read, and new files in the folder that are in another format are not read either. They are reported instead of skipped silently:
+
+```csharp
+// Per line, from a collector
+collector.LineNotRead += (_, e) => Console.WriteLine($"{e.File.Name} line {e.LineNumber} not read: {e.Line}");
+
+// Summed up by the analyzer, at most once per batch
+analyzer.NotReadChanged += (_, _) =>
+{
+    var notRead = analyzer.GetNotRead();
+    Console.WriteLine(notRead.ToShortText()); // "Not read: 5,810 lines, 1 file"
+    Console.WriteLine(notRead.ToDetails());   // the files, an example line per file, and what to do
+};
+```
+
+`GetLogStatistics()` also has `LinesNotReadCount` and `FilesNotReadCount`. `ClearLogEntries()` forgets them.
+
 ## Highlight and timeline
 
 ```csharp
