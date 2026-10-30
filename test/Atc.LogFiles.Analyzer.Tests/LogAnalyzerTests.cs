@@ -154,6 +154,38 @@ public sealed class LogAnalyzerTests : IDisposable
     }
 
     [Fact]
+    public void SourceSystemsVersion_ChangesOnlyWhenANewSourceSystemAppears()
+    {
+        // Arrange
+        RaiseEntry(CreateEntry(0, LogLevel.Information, "first"));
+        var afterFirst = sut.SourceSystemsVersion;
+
+        // Act
+        RaiseEntry(CreateEntry(1, LogLevel.Information, "same system"));
+        var afterSameSystem = sut.SourceSystemsVersion;
+        RaiseEntry(CreateEntry(2, LogLevel.Information, "new system", sourceSystem: "Worker"));
+        var afterNewSystem = sut.SourceSystemsVersion;
+
+        // Assert
+        afterSameSystem.Should().Be(afterFirst);
+        afterNewSystem.Should().NotBe(afterSameSystem);
+    }
+
+    [Fact]
+    public void SourceSystemsVersion_ChangesWhenTheEntriesAreCleared()
+    {
+        // Arrange
+        RaiseDefaultEntries();
+        var before = sut.SourceSystemsVersion;
+
+        // Act
+        sut.ClearLogEntries();
+
+        // Assert
+        sut.SourceSystemsVersion.Should().NotBe(before);
+    }
+
+    [Fact]
     public void ClearLogEntries_RemovesAllEntries()
     {
         // Arrange

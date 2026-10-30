@@ -16,6 +16,7 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
     private string? newVersionIsAvailable;
     private bool isHighlightsFlyoutOpen;
     private long displayedFilterVersion;
+    private long displayedSourceSystemsVersion = -1;
     private int filterRequestId;
     private HighlightEditorViewModel? highlightEditorViewModel;
     private BitmapImage? icon;
@@ -432,6 +433,14 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
 
     private void RefreshSourceSystems()
     {
+        // Live batches come up to 10 times a second; the list is only rebuilt when a new system appeared
+        var version = logAnalyzer.SourceSystemsVersion;
+        if (version == displayedSourceSystemsVersion)
+        {
+            return;
+        }
+
+        displayedSourceSystemsVersion = version;
         var sourceSystems = logAnalyzer.GetSourceSystems();
         if (sourceSystems.Keys.SequenceEqual(SourceSystems.Keys, StringComparer.Ordinal))
         {

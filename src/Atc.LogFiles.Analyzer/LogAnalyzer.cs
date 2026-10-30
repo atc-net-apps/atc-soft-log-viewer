@@ -27,6 +27,7 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
     private bool isNotReadChanged;
     private long linesNotReadCount;
     private long filterVersion;
+    private long sourceSystemsVersion;
     private int activeCollectCount;
     private FileSystemWatcher? fileSystemWatcher;
     private DirectoryInfo? watchedDirectory;
@@ -192,6 +193,9 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
         return new LogEntryBatch(entries, version);
     }
 
+    public long SourceSystemsVersion
+        => Interlocked.Read(ref sourceSystemsVersion);
+
     public IDictionary<string, string> GetSourceSystems()
     {
         List<string> systems;
@@ -263,6 +267,7 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
             logEntries.Clear();
             pendingEntries.Clear();
             sourceSystems.Clear();
+            Interlocked.Increment(ref sourceSystemsVersion);
             Array.Clear(logLevelCounts);
         }
     }
@@ -436,7 +441,10 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
         {
             logEntries.Add(logEntry);
             logLevelCounts[(int)logEntry.LogLevel]++;
-            sourceSystems.Add(logEntry.SourceSystem);
+            if (sourceSystems.Add(logEntry.SourceSystem))
+            {
+                Interlocked.Increment(ref sourceSystemsVersion);
+            }
 
             if (!IsMatch(logEntry, logFilter))
             {

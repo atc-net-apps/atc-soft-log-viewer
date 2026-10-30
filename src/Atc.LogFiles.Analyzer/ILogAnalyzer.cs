@@ -43,6 +43,12 @@ public interface ILogAnalyzer
 
     public IDictionary<string, string> GetSourceSystems();
 
+    /// <summary>
+    /// Gets a number that changes only when the source systems change, so a caller can skip
+    /// <see cref="GetSourceSystems"/> when it hasn't.
+    /// </summary>
+    long SourceSystemsVersion { get; }
+
     AtcLogEntry[] GetFilteredLogEntries();
 
     LogStatistics GetLogStatistics();
