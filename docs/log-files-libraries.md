@@ -1,13 +1,15 @@
 # Atc.LogFiles libraries
 
-The log viewer reads log files with two libraries in this repo. They are plain C# (`net10.0`), have no UI types and don't reference the app, so another front end, or a later NuGet package, can use them as they are.
+The log viewer reads log files with two libraries in this repo. They are plain C# (`net10.0`), have no UI types and don't reference the app, so another front end in this repo can use them as they are.
 
 | Project | What |
 |---|---|
 | `Atc.LogFiles.Collector` | Parses log4net, NLog and Serilog files and folders into `AtcLogEntry` records, including multi-line entries such as stack traces and JSON payloads, and tails files for new entries |
 | `Atc.LogFiles.Analyzer` | Keeps the collected entries, filters them (levels, text, time range, source system), counts them per level, matches highlight rules and builds timeline buckets |
 
-They were `Atc.LogCollector` and `Atc.LogAnalyzer` in the retired [atc-net/atc-logviewer](https://github.com/atc-net/atc-logviewer) repo. They were never published to NuGet.
+They were `Atc.LogCollector` and `Atc.LogAnalyzer` in the retired [atc-net/atc-logviewer](https://github.com/atc-net/atc-logviewer) repo.
+
+🔒 **Internal to this app.** They are not published to NuGet, and their API can change with any release of the app. If you want to use them elsewhere, open an issue: publishing them would mean a stable API and versions of their own.
 
 ## Read a file
 

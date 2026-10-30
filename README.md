@@ -244,7 +244,7 @@ dotnet run --project src/AtcSoft.Log.Viewer.Wpf.App -c Release
 
 | Document | Description |
 |----------|-------------|
-| [📦 Atc.LogFiles libraries](docs/log-files-libraries.md) | Read, filter, count, highlight and build a timeline in your own code |
+| [📦 Atc.LogFiles libraries](docs/log-files-libraries.md) | How the app reads, filters, counts, highlights and builds a timeline. Internal: not published to NuGet |
 | [🧪 Log simulator](sample/README.md) | Watch the viewer follow files that are written, rolled and deleted |
 | [🖥️ UI tests](docs/e2e-tests.md) | End-to-end tests that drive the app |
 | [🏭 Sample generator](tool/Atc.LogFiles.SampleGenerator/README.md) | Write big sample log files |
