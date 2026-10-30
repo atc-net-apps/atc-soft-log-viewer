@@ -114,6 +114,8 @@ public sealed class FolderMonitoringTests : IDisposable
 
         // Assert
         (await WaitForMessages("last before roll", "first after roll")).Should().BeTrue();
+        await Task.Delay(500, CancellationToken);
+        received.Select(x => x.MessageFull).Should().Equal("started", "last before roll", "first after roll");
     }
 
     [Fact]

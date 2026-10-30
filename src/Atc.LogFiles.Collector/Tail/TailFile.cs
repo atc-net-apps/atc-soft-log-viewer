@@ -10,11 +10,18 @@ namespace Atc.LogFiles.Collector.Tail;
 /// A last line without a line break that was already in the file when tailing started is raised once the file has
 /// stopped growing for <see cref="PartialLineQuietPeriod"/>, so a file that ends without one still shows its last line.
 /// A partial line written while tailing waits for its line break: buffered loggers flush in the middle of a line.
+/// <para>
+/// The file is read by its path, and a logger can roll it (rename it and create a new one) at any moment, also
+/// between a notification and the read. The first bytes of the file are kept, so a read that finds another file at
+/// the path does not read it from the old position: it waits for the rename or delete notification, which first
+/// reads the rest of the old file. Without one (truncated, or replaced by a copy), the file is read from the start.
+/// </para>
 /// </remarks>
 public class TailFile : IDisposable
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan PartialLineQuietPeriod = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan ReplacedFileGracePeriod = TimeSpan.FromMilliseconds(500);
     private static readonly byte[] Utf8Preamble = Encoding.UTF8.GetPreamble();
 
     private readonly FileInfo file;
@@ -24,6 +31,9 @@ public class TailFile : IDisposable
     // Not disposable on purpose: a read on a timer thread may still run while the tail is disposed
     private readonly ArrayBufferWriter<byte> partialLine = new();
     private readonly byte[] readBuffer = new byte[64 * 1024];
+    private readonly byte[] head = new byte[64];
+    private int headCount;
+    private long replacedSinceTicks = -1;
     private long offset;
     private long? pendingStartOffset;
     private string? renamedToPath;
@@ -72,6 +82,7 @@ public class TailFile : IDisposable
         lengthAtStart = file.Exists ? file.Length : 0;
         offset = pendingStartOffset ?? lengthAtStart;
         pendingStartOffset = null;
+        RememberHead();
 
         isPaused = false;
         isRunning = true;
@@ -187,14 +198,14 @@ public class TailFile : IDisposable
                 var renamedTo = Interlocked.Exchange(ref renamedToPath, null);
                 if (renamedTo is not null)
                 {
-                    ReadToEnd(renamedTo);
+                    ReadToEnd(renamedTo, isTailedPath: false);
                     RaisePartialLine();
                 }
 
                 ResetToStartOfFile();
             }
 
-            ReadToEnd(file.FullName);
+            ReadToEnd(file.FullName, isTailedPath: true);
         }
         catch (IOException)
         {
@@ -206,7 +217,9 @@ public class TailFile : IDisposable
         }
     }
 
-    private void ReadToEnd(string path)
+    private void ReadToEnd(
+        string path,
+        bool isTailedPath)
     {
         if (!File.Exists(path))
         {
@@ -220,10 +233,19 @@ public class TailFile : IDisposable
             FileShare.ReadWrite | FileShare.Delete,
             bufferSize: 1);
 
-        if (stream.Length < offset)
+        if (isTailedPath && !IsSameFile(stream))
         {
-            // Truncated or replaced by a new file
+            if (!IsReplacedFileToBeReadFromStart())
+            {
+                return;
+            }
+
             ResetToStartOfFile();
+            IsSameFile(stream);
+        }
+        else
+        {
+            replacedSinceTicks = -1;
         }
 
         if (stream.Length == offset)
@@ -242,6 +264,93 @@ public class TailFile : IDisposable
             ProcessBytes(readBuffer.AsSpan(skip, bytesRead - skip));
             offset += bytesRead;
             lastGrowthTicks = Environment.TickCount64;
+        }
+    }
+
+    /// <summary>
+    /// Gets whether the file at the path is still the file being read: its first bytes are the same, and it is not shorter.
+    /// The first time it is called after a reset, it remembers the first bytes.
+    /// </summary>
+    private bool IsSameFile(FileStream stream)
+    {
+        if (stream.Length < offset)
+        {
+            return false;
+        }
+
+        Span<byte> current = stackalloc byte[head.Length];
+        var count = (int)System.Math.Min(stream.Length, head.Length);
+        stream.Seek(0, SeekOrigin.Begin);
+        stream.ReadExactly(current[..count]);
+
+        var common = System.Math.Min(count, headCount);
+        if (!current[..common].SequenceEqual(head.AsSpan(0, common)))
+        {
+            return false;
+        }
+
+        if (count > headCount)
+        {
+            current[headCount..count].CopyTo(head.AsSpan(headCount));
+            headCount = count;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Another file is at the path. A rename or delete notification reads the rest of the old file first,
+    /// so wait for it; without one in a moment, the file was truncated or copied over, and is read from the start.
+    /// </summary>
+    private bool IsReplacedFileToBeReadFromStart()
+    {
+        if (Volatile.Read(ref isResetRequested) == 1)
+        {
+            return false;
+        }
+
+        var now = Environment.TickCount64;
+        if (replacedSinceTicks < 0)
+        {
+            replacedSinceTicks = now;
+            return false;
+        }
+
+        if (now - replacedSinceTicks < (long)ReplacedFileGracePeriod.TotalMilliseconds)
+        {
+            return false;
+        }
+
+        replacedSinceTicks = -1;
+        return true;
+    }
+
+    private void RememberHead()
+    {
+        headCount = 0;
+        try
+        {
+            if (!File.Exists(file.FullName))
+            {
+                return;
+            }
+
+            using var stream = new FileStream(
+                file.FullName,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite | FileShare.Delete,
+                bufferSize: 1);
+
+            IsSameFile(stream);
+        }
+        catch (IOException)
+        {
+            // Remembered on the first read instead
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Remembered on the first read instead
         }
     }
 
@@ -318,6 +427,8 @@ public class TailFile : IDisposable
         offset = 0;
         lengthAtStart = 0;
         numberOfLines = 0;
+        headCount = 0;
+        replacedSinceTicks = -1;
         partialLine.ResetWrittenCount();
     }
 }

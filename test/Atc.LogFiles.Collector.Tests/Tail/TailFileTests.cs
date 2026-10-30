@@ -186,6 +186,32 @@ public sealed class TailFileTests : IDisposable
     }
 
     [Fact]
+    public async Task RenamedFile_ReadBeforeTheRenameIsSeen_NoLineIsLostOrCut()
+    {
+        // Arrange - a line, a rename and a new file, so close together that a read can see the new file
+        // before the rename is reported
+        var file = CreateEmptyFile("app.log");
+        await File.WriteAllTextAsync(file.FullName, "line 1\n", CancellationToken);
+        var received = new ConcurrentQueue<TailLine>();
+        var tailFile = new TailFile(file, lastLineNumber: 1, startOffset: "line 1\n".Length);
+        tailFile.LineAdded += (_, e) => received.Enqueue(e.Line);
+        tailFiles.Add(tailFile);
+        tailFile.Start();
+
+        // Act
+        await File.AppendAllTextAsync(file.FullName, "last before roll\n", CancellationToken);
+        File.Move(file.FullName, Path.Combine(directory.FullName, "app.1.log"));
+        await File.WriteAllTextAsync(file.FullName, "first after roll, a longer line\n", CancellationToken);
+
+        // Assert
+        (await WaitUntil(() => received.Any(x => x.Line == "first after roll, a longer line"))).Should().BeTrue();
+        await Task.Delay(300, CancellationToken);
+        received.Select(x => (x.Line, x.LineNumber)).Should().Equal(
+            ("last before roll", 2L),
+            ("first after roll, a longer line", 1L));
+    }
+
+    [Fact]
     public async Task Stop_StopsRaisingLines()
     {
         // Arrange
