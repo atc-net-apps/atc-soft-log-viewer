@@ -9,6 +9,14 @@ ATC Log Viewer (`AtcSoft.Log.Viewer`) is a free, open source Windows app for rea
 
 > 🚚 **Moved here:** this repo replaces the retired `atc-net/atc-logviewer`. The parsing is done by the `Atc.LogFiles.Collector` and `Atc.LogFiles.Analyzer` libraries in this repo - see [how to use them](docs/log-files-libraries.md).
 
+## 📥 Install
+
+Download `AtcSoft.Log.Viewer.Installer.msi` from the [latest release](https://github.com/atc-net-apps/atc-soft-log-viewer/releases/latest) and run it.
+
+* 📁 It installs to `C:\Program Files\AtcSoft\Log Viewer`, with a Start menu and a desktop shortcut. It needs admin rights.
+* 🧩 It needs the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) (x64).
+* ⬆️ A newer MSI upgrades the installed version. Your profiles and settings are kept: they live in your user folder, see [where the app keeps its data](#-where-the-app-keeps-its-data).
+
 ## ✨ Features
 
 | Area | Feature | Description |
@@ -35,6 +43,7 @@ ATC Log Viewer (`AtcSoft.Log.Viewer`) is a free, open source Windows app for rea
 | | 📈 **Timeline distribution** | Entries over time per log level: the latest 60 minutes, or 12, 24 or 48 hours |
 | | 🔢 **Status bar** | Shown and total counts, in all and per log level |
 | **App** | 🌗 **Light and dark mode** | Pick the theme in **Application settings** |
+| | 🔔 **Check for updates** | At start, the app checks the latest GitHub release and shows a notice above the log when a newer version is out. **Check for updates** in the **Application** menu shows the versions and downloads the installer |
 | | ℹ️ **About** | Version and credits |
 
 ## 🖼️ Screenshots
@@ -191,7 +200,7 @@ layout = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message}{NewLine
 
 Profiles, recent files and custom application settings are stored per user in `%LOCALAPPDATA%\AtcSoft\AtcSoft.Log.Viewer`.
 
-Set the environment variable `ATCSOFT_LOGVIEWER_DATA_PATH` to use another folder.
+Set the environment variable `ATCSOFT_LOGVIEWER_DATA_PATH` to use another folder. Set `ATCSOFT_LOGVIEWER_SKIP_UPDATE_CHECK=1` to turn off the update check at start.
 
 Earlier versions stored them machine-wide in `%ProgramData%\ATC\atc-logviewer`. On first start, that folder is copied to the new location once. The old folder is left as it is.
 
@@ -216,11 +225,12 @@ dotnet run --project src/AtcSoft.Log.Viewer.Wpf.App -c Release
 
 | Project | What |
 |---|---|
-| `src/AtcSoft.Log.Viewer` | App core without UI: data paths, the migration of earlier data, the profile format and timeline modes |
+| `src/AtcSoft.Log.Viewer` | App core without UI: data paths, the migration of earlier data, the profile format, timeline modes and the update check |
 | `src/AtcSoft.Log.Viewer.Wpf` | The WPF front end: views and view models |
 | `src/AtcSoft.Log.Viewer.Wpf.App` | The exe: starts the app and shows the main window |
 | `src/Atc.LogFiles.Collector` | Reads and tails log4net, NLog and Serilog files (pure C#, no reference to the app) |
 | `src/Atc.LogFiles.Analyzer` | Combines collectors; filters, counts, highlight matching, timeline buckets, and watching the folder for new files (pure C#, no reference to the app) |
+| `setup/AtcSoft.Log.Viewer.Installer` | The WiX MSI. The release workflow builds it and attaches it to each GitHub release |
 | `sample/Atc.LogFiles.Simulator` | Web page that writes, rolls and deletes log files, see the [sample README](sample/README.md) |
 | `sample/AtcSoft.Log.Viewer.Sample.AppHost` | Aspire AppHost that starts the simulator and the viewer |
 | `test/AtcSoft.Log.Viewer.Tests` | Tests for the core |
