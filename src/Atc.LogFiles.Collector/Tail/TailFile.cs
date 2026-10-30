@@ -7,10 +7,13 @@ namespace Atc.LogFiles.Collector.Tail;
 /// File system notifications and a slow backup poll both only request a read; at most one read runs at a time,
 /// and it returns when the new content has been read, so an idle tailed file does not hold a thread.
 /// A line is raised when its line break has been written, and a truncated or replaced file is read from the start.
+/// A last line without a line break is raised once the file has stopped growing for <see cref="PartialLineQuietPeriod"/>,
+/// so a file that ends without one still shows its last line.
 /// </remarks>
 public class TailFile : IDisposable
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan PartialLineQuietPeriod = TimeSpan.FromSeconds(1);
     private static readonly byte[] Utf8Preamble = Encoding.UTF8.GetPreamble();
 
     private readonly FileInfo file;
@@ -22,6 +25,7 @@ public class TailFile : IDisposable
     private long? pendingStartOffset;
     private string? renamedToPath;
     private long numberOfLines;
+    private long lastGrowthTicks;
     private int isReading;
     private int isReadRequested;
     private int isResetRequested;
@@ -220,6 +224,7 @@ public class TailFile : IDisposable
 
         if (stream.Length == offset)
         {
+            RaisePartialLineWhenQuiet();
             return;
         }
 
@@ -232,6 +237,16 @@ public class TailFile : IDisposable
             var skip = GetPreambleLength(bytesRead);
             ProcessBytes(readBuffer.AsSpan(skip, bytesRead - skip));
             offset += bytesRead;
+            lastGrowthTicks = Environment.TickCount64;
+        }
+    }
+
+    private void RaisePartialLineWhenQuiet()
+    {
+        if (partialLine.Length > 0 &&
+            Environment.TickCount64 - lastGrowthTicks >= (long)PartialLineQuietPeriod.TotalMilliseconds)
+        {
+            RaisePartialLine();
         }
     }
 

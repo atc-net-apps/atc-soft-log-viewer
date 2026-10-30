@@ -328,6 +328,56 @@ public sealed class FolderMonitoringTests : IDisposable
         sut.GetLogStatistics().LinesNotReadCount.Should().Be(0);
     }
 
+    [Fact]
+    public async Task HalfWrittenLastLine_WhenTheFolderIsOpened_IsReadOnceComplete()
+    {
+        // Arrange - the logger is in the middle of a line when the folder is opened
+        var file = await WriteLines("app.log", "started");
+        var line = Line("Order 42 done");
+        await File.AppendAllTextAsync(file.FullName, line[..^3], CancellationToken);
+        await StartWatching();
+
+        // Act
+        await File.AppendAllTextAsync(file.FullName, line[^3..] + Environment.NewLine, CancellationToken);
+
+        // Assert
+        (await WaitForMessages("Order 42 done")).Should().BeTrue();
+        await Task.Delay(500, CancellationToken);
+        received.Select(x => x.MessageFull).Should().Equal("started", "Order 42 done");
+    }
+
+    [Fact]
+    public async Task FileWithOnlyAHalfWrittenLine_WhenTheFolderIsOpened_IsReadOnceComplete()
+    {
+        // Arrange - a second file whose first line is still being written
+        await WriteLines("app.log", "started");
+        var file = new FileInfo(Path.Combine(directory.FullName, "worker.log"));
+        var line = Line("worker started");
+        await File.WriteAllTextAsync(file.FullName, line[..^4], CancellationToken);
+        await StartWatching();
+
+        // Act
+        await File.AppendAllTextAsync(file.FullName, line[^4..] + Environment.NewLine, CancellationToken);
+        await AppendLines(file, "worker next");
+
+        // Assert
+        (await WaitForMessages("worker started", "worker next")).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task LastLineWithoutLineBreak_InAFollowedFile_IsRead()
+    {
+        // Arrange - a file whose last line has no line break, and nothing more is written
+        var file = await WriteLines("app.log", "started");
+        await File.AppendAllTextAsync(file.FullName, Line("no line break at the end"), CancellationToken);
+
+        // Act
+        await StartWatching();
+
+        // Assert
+        (await WaitForMessages("started", "no line break at the end")).Should().BeTrue();
+    }
+
     private static string Log4NetLine(string message)
         => $"{DateTime.Now:yyyy-MM-dd HH:mm:ss,fff} [8] INFO  Worker - {message}"; // log4net's default layout
 

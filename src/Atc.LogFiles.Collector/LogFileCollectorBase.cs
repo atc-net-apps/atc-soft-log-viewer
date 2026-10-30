@@ -207,15 +207,22 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
         FileInfo file,
         CancellationToken cancellationToken)
     {
-        var (isSuccessFul, lastLineNumber, _) = await ReadAndParseLinesToEnd(file, cancellationToken)
+        var (isSuccessFul, lastLineNumber, _) = await ReadAndParseLinesToEnd(file, stopBeforeUnfinishedLine: false, cancellationToken)
             .ConfigureAwait(continueOnCapturedContext: false);
 
         return (isSuccessFul, lastLineNumber);
     }
 
+    /// <param name="file">The log file.</param>
+    /// <param name="stopBeforeUnfinishedLine">
+    /// Whether to stop before a last line without a line break: the logger may still be writing it,
+    /// and the tail reads it when it is complete.
+    /// </param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>Whether any entry was found, the number of lines, and the byte position where reading stopped.</returns>
     private async Task<(bool IsSuccessFul, long LastLineNumber, long EndOffset)> ReadAndParseLinesToEnd(
         FileInfo file,
+        bool stopBeforeUnfinishedLine,
         CancellationToken cancellationToken)
     {
         var hasAnyEntries = false;
@@ -229,7 +236,9 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
 
         long lineNumber = 0;
         long endOffset;
-        using (var reader = OpenReader(file))
+        using (var reader = stopBeforeUnfinishedLine
+                   ? CreateReader(CompleteLinesStream.Create(OpenStream(file)))
+                   : OpenReader(file))
         {
             while (await reader.ReadLineAsync(cancellationToken).ConfigureAwait(continueOnCapturedContext: false) is { } line)
             {
@@ -302,14 +311,20 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
         string line);
 
     private static StreamReader OpenReader(FileInfo file)
+        => CreateReader(OpenStream(file));
+
+    private static FileStream OpenStream(FileInfo file)
         => new(
-            new FileStream(
-                file.FullName,
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.ReadWrite | FileShare.Delete,
-                bufferSize: 64 * 1024,
-                FileOptions.SequentialScan | FileOptions.Asynchronous),
+            file.FullName,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.ReadWrite | FileShare.Delete,
+            bufferSize: 64 * 1024,
+            FileOptions.SequentialScan | FileOptions.Asynchronous);
+
+    private static StreamReader CreateReader(Stream stream)
+        => new(
+            stream,
             Encoding.UTF8,
             detectEncodingFromByteOrderMarks: true);
 
@@ -318,10 +333,19 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
         bool useMonitoring,
         CancellationToken cancellationToken)
     {
+        // A followed file may have a line the logger is still writing; leave it to the tail
+        var willMonitor = useMonitoring && file.IsCreatedToday() && !IsFileMonitoring(file);
         var (isSuccessFul, lastLineNumber, endOffset) = await ReadAndParseLinesToEnd(
                 file,
+                stopBeforeUnfinishedLine: willMonitor,
                 cancellationToken)
             .ConfigureAwait(continueOnCapturedContext: false);
+
+        if (useMonitoring)
+        {
+            // Followed even without a complete entry yet: its first line may still be being written
+            MonitorFileIfNeeded(file, lastLineNumber, endOffset);
+        }
 
         if (!isSuccessFul)
         {
@@ -329,12 +353,6 @@ public abstract class LogFileCollectorBase : LogCollectorBase, IFileCollector
         }
 
         CollectedFileDone?.Invoke(this, new FileEventArgs(file));
-
-        if (useMonitoring)
-        {
-            MonitorFileIfNeeded(file, lastLineNumber, endOffset);
-        }
-
         return true;
     }
 

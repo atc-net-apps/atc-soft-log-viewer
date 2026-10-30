@@ -87,6 +87,25 @@ public sealed class TailFileTests : IDisposable
     }
 
     [Fact]
+    public async Task PartialLine_IsRaisedWhenTheFileStopsGrowing()
+    {
+        // Arrange - a last line without a line break, that the logger won't finish
+        var file = CreateEmptyFile("app.log");
+        await File.WriteAllTextAsync(file.FullName, "line 1\nno line break", CancellationToken);
+        var received = new ConcurrentQueue<TailLine>();
+        var tailFile = new TailFile(file, lastLineNumber: 1, startOffset: "line 1\n".Length);
+        tailFile.LineAdded += (_, e) => received.Enqueue(e.Line);
+        tailFiles.Add(tailFile);
+
+        // Act
+        tailFile.Start();
+
+        // Assert
+        (await WaitUntil(() => !received.IsEmpty)).Should().BeTrue();
+        received.Select(x => (x.Line, x.LineNumber)).Should().Equal(("no line break", 2L));
+    }
+
+    [Fact]
     public async Task TruncatedFile_IsReadFromTheStart()
     {
         // Arrange
