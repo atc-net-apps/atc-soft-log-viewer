@@ -16,13 +16,14 @@ $env:ATCSOFT_E2E = 1
 dotnet test --project test/AtcSoft.Log.Viewer.E2E.Tests -c Release --no-build
 ```
 
-They take about a minute. Stop the sample AppHost in Visual Studio first: the tests start their own.
+They take a bit over a minute. Stop the sample AppHost in Visual Studio first: the tests start their own.
 
 ## 🧪 What they check
 
 | Test | What it does | It fails when |
 |---|---|---|
 | 🧭 `Every_View_And_Dialog_Opens_Without_A_Crash` | Selects the ribbon's tabs and views, opens the highlights pane, and opens and closes About, Application settings and New profile | A step breaks, a crash dialog shows, or the app exits |
+| 📁 `Starts_From_Another_Working_Folder` | Starts the viewer with another current folder, as a shortcut, "Open with" or a terminal does | The viewer does not start (it read `appsettings.json` from the current folder) |
 | 📂 `Follows_Appends_Rolls_Deletes_And_New_Files` | The simulator writes 1,000 entries, then appends, rolls by rename, deletes a rolled file and creates a file empty that gets its first line 3 s later | The status bar count is not exactly what was written (nothing lost, nothing twice) |
 | 💥 `Window_Keeps_Answering_During_A_Burst` | Writes 50,000 entries at once while it reads the status bar | A read takes 2 s or more, or the count is wrong |
 | 🌊 `Window_Keeps_Answering_At_5000_Entries_A_Second` | Writes 5,000 entries a second for 10 s with auto-scroll on, measures how fast the window answers, and reads how far the list is scrolled | A read takes 2 s or more, the count is wrong, or the list is not kept at the end |
