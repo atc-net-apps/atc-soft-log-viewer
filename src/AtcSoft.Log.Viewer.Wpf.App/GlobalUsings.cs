@@ -13,6 +13,7 @@ global using Atc.Wpf.Theming.Helpers;
 global using Atc.Wpf.Translation;
 global using Atc.XamlToolkit.Diagnostics;
 
+global using AtcSoft.Log.Viewer.Updates;
 global using AtcSoft.Log.Viewer.Wpf.Dialogs;
 global using AtcSoft.Log.Viewer.Wpf.UserControls;
 

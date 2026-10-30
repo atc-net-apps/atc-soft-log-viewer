@@ -14,6 +14,11 @@ public static class WpfApp
     /// </summary>
     public static AppDataPaths DataPaths { get; } = AppDataPaths.FromEnvironment();
 
+    /// <summary>
+    /// Gets the version of the exe, not of this library.
+    /// </summary>
+    public static Version CurrentVersion { get; } = Assembly.GetEntryAssembly()?.GetName().Version ?? new Version(0, 0, 0);
+
     public static JsonSerializerOptions JsonSerializerOptions
     {
         get

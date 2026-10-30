@@ -1,5 +1,6 @@
 global using System.Collections.Specialized;
 global using System.ComponentModel;
+global using System.Diagnostics;
 global using System.Diagnostics.CodeAnalysis;
 global using System.Globalization;
 global using System.IO;
@@ -37,6 +38,7 @@ global using Atc.XamlToolkit.Mvvm;
 global using AtcSoft.Log.Viewer.Profiles;
 global using AtcSoft.Log.Viewer.RecentFiles;
 global using AtcSoft.Log.Viewer.Timeline;
+global using AtcSoft.Log.Viewer.Updates;
 global using AtcSoft.Log.Viewer.Wpf.Dialogs;
 global using AtcSoft.Log.Viewer.Wpf.Extensions;
 global using AtcSoft.Log.Viewer.Wpf.Extractors;

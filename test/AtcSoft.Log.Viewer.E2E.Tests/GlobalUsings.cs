@@ -8,6 +8,7 @@ global using Atc.LogFiles.Collector;
 global using Atc.LogFiles.Simulator;
 global using AtcSoft.Log.Viewer.E2E.Infrastructure;
 global using AtcSoft.Log.Viewer.Profiles;
+global using AtcSoft.Log.Viewer.Updates;
 global using FlaUI.Core.AutomationElements;
 global using FlaUI.Core.Conditions;
 global using FlaUI.Core.Definitions;

@@ -32,6 +32,9 @@ public partial class MainWindowViewModel
     public IRelayCommand OpenApplicationSettingsCommand
         => new RelayCommand(OpenApplicationSettingsCommandHandler);
 
+    public IRelayCommand OpenApplicationCheckForUpdatesCommand
+        => new RelayCommand(OpenApplicationCheckForUpdatesCommandHandler);
+
     public IRelayCommand OpenApplicationAboutCommand
         => new RelayCommand(OpenApplicationAboutCommandHandler);
 
@@ -248,6 +251,9 @@ public partial class MainWindowViewModel
                 new DirectoryInfo(openFolderDialog.FolderName))
             .ConfigureAwait(true);
     }
+
+    private void OpenApplicationCheckForUpdatesCommandHandler()
+        => new CheckForUpdatesBoxDialog(gitHubReleaseService).ShowDialog();
 
     [SuppressMessage("Major Code Smell", "S2325:Methods and properties that don't access instance data should be static", Justification = "OK - exposed as an instance command for XAML binding.")]
     private void OpenApplicationAboutCommandHandler()

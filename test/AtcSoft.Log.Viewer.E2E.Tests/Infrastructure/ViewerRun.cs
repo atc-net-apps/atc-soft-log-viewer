@@ -45,6 +45,7 @@ internal sealed class ViewerRun : IDisposable
             new Dictionary<string, string>(StringComparer.Ordinal)
             {
                 [AppDataPaths.DataPathVariable] = DataFolder,
+                [UpdateCheck.SkipVariable] = "1",
                 ["Application__OpenRecentFileOnStartup"] = "true",
             },
             Path.Combine(DataFolder, "viewer-output.log"),

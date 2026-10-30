@@ -54,6 +54,7 @@ public partial class App
                 services.AddSingleton<ISerilogFileCollector, SerilogFileCollector>();
 
                 services.AddSingleton<ILogAnalyzer, Atc.LogFiles.Analyzer.LogAnalyzer>();
+                services.AddSingleton<IGitHubReleaseService, GitHubReleaseService>();
                 services.AddSingleton<StatusBarViewModel>();
                 services.AddSingleton<MainWindowViewModel>();
                 services.AddSingleton<MainWindow>();

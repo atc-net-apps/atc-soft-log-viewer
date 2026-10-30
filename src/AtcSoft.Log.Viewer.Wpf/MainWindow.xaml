@@ -99,6 +99,10 @@
                                     Header="Application settings"
                                     Icon="{Binding Source={x:Static fontIcons:IcoFontType.UiSettings}, Converter={StaticResource FontIconImageConverter}, ConverterParameter={StaticResource AtcApps.Brushes.ThemeForeground}}" />
                                 <fluent:Button
+                                    Command="{Binding Path=OpenApplicationCheckForUpdatesCommand}"
+                                    Header="Check for updates"
+                                    Icon="{Binding Source={x:Static fontIcons:FontBootstrapType.Download}, Converter={StaticResource FontIconImageConverter}, ConverterParameter={StaticResource AtcApps.Brushes.ThemeForeground}}" />
+                                <fluent:Button
                                     Command="{Binding Path=OpenApplicationAboutCommand}"
                                     Header="About"
                                     Icon="{Binding Source={x:Static fontIcons:FontAwesomeSolidType.InfoCircle}, Converter={StaticResource FontIconImageConverter}, ConverterParameter={StaticResource AtcApps.Brushes.ThemeForeground}}" />
@@ -272,6 +276,19 @@
                 </fluent:Ribbon>
                 <!--  ::::::::::::::::::::::::::::::::::::::::::::::  -->
                 <atc:GridEx Grid.Row="1" Rows="Auto,*">
+                    <!--  Shown when a newer version is released  -->
+                    <Button
+                        Grid.Row="0"
+                        Padding="0,5"
+                        HorizontalAlignment="Stretch"
+                        AutomationProperties.AutomationId="NewVersionNotice"
+                        Background="DarkOrange"
+                        BorderThickness="0"
+                        Command="{Binding Path=OpenApplicationCheckForUpdatesCommand}"
+                        Content="{Binding Path=NewVersionIsAvailable}"
+                        Cursor="Hand"
+                        Foreground="Black"
+                        Visibility="{Binding Path=NewVersionIsAvailable, Converter={StaticResource StringNullOrEmptyToVisibilityCollapsedConverter}}" />
                     <Grid Grid.Row="1">
                         <!--  ListView  -->
                         <atc:GridEx

@@ -6,3 +6,4 @@ global using Atc.LogFiles.Collector;
 global using AtcSoft.Log.Viewer.Profiles;
 global using AtcSoft.Log.Viewer.RecentFiles;
 global using AtcSoft.Log.Viewer.Timeline;
+global using AtcSoft.Log.Viewer.Updates;

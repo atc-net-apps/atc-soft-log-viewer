@@ -8,6 +8,19 @@ namespace AtcSoft.Log.Viewer.Wpf;
 [SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable", Justification = "OK.")]
 public partial class MainWindowViewModel
 {
+    private async Task CheckForNewVersion()
+    {
+        var latest = await gitHubReleaseService
+            .GetLatestAsync(CancellationToken.None)
+            .ConfigureAwait(false);
+
+        if (latest is not null &&
+            latest.IsNewerThan(WpfApp.CurrentVersion))
+        {
+            NewVersionIsAvailable = $"Version {latest.Version.ToString(3)} of ATC Log Viewer is available";
+        }
+    }
+
     private void LoadRecentOpenFiles()
         => ShowRecentOpenFiles(RecentFilesFile.Load(WpfApp.DataPaths.RecentOpenFilesFile));
 

@@ -12,6 +12,8 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
     private readonly List<LogEntryBatch> earlyBatches = [];
     private readonly ILogger<MainWindowViewModel> logger;
     private readonly ILogAnalyzer logAnalyzer;
+    private readonly IGitHubReleaseService gitHubReleaseService;
+    private string? newVersionIsAvailable;
     private bool isHighlightsFlyoutOpen;
     private long displayedFilterVersion;
     private int filterRequestId;
@@ -35,16 +37,19 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
     public MainWindowViewModel(
         ILogger<MainWindowViewModel> logger,
         ILogAnalyzer logAnalyzer,
+        IGitHubReleaseService gitHubReleaseService,
         StatusBarViewModel statusBarViewModel,
         IOptions<BasicApplicationOptions> applicationOptions)
     {
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(logAnalyzer);
+        ArgumentNullException.ThrowIfNull(gitHubReleaseService);
         ArgumentNullException.ThrowIfNull(statusBarViewModel);
         ArgumentNullException.ThrowIfNull(applicationOptions);
 
         this.logger = logger;
         this.logAnalyzer = logAnalyzer;
+        this.gitHubReleaseService = gitHubReleaseService;
 
         Icon = WpfApp.DefaultIcon;
 
@@ -71,6 +76,24 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
             RecentOpenFiles.Count > 0)
         {
             OpenLastUsedProfileCommand.ExecuteAsync(parameter: null);
+        }
+
+        if (!UpdateCheck.IsSkipped(Environment.GetEnvironmentVariable(UpdateCheck.SkipVariable)))
+        {
+            TaskHelper.FireAndForget(CheckForNewVersion());
+        }
+    }
+
+    /// <summary>
+    /// Gets the notice shown above the log when a newer version is released, or <see langword="null"/>.
+    /// </summary>
+    public string? NewVersionIsAvailable
+    {
+        get => newVersionIsAvailable;
+        private set
+        {
+            newVersionIsAvailable = value;
+            OnPropertyChanged();
         }
     }
 
