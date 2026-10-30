@@ -78,8 +78,13 @@ jobs:
           name: msi-installer
           path: ./msi
 
+      # One checksum file per MSI, so a download can be checked: AtcSoft.Log.Viewer.Installer.msi.sha256
+      - name: 🔒 Write the SHA-256 checksums
+        working-directory: ./msi
+        run: for f in *.msi; do sha256sum "$f" > "$f.sha256"; done
+
       # The update check looks for this asset by name: AtcSoft.Log.Viewer.Installer.msi.
-      - name: 📎 Attach the MSI to the release
+      - name: 📎 Attach the MSI and its checksum to the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "${{ needs.release-please.outputs.tag_name }}" ./msi/*.msi --clobber --repo "${{ github.repository }}"
+        run: gh release upload "${{ needs.release-please.outputs.tag_name }}" ./msi/*.msi ./msi/*.msi.sha256 --clobber --repo "${{ github.repository }}"

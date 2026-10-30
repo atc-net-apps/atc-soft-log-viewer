@@ -15,6 +15,7 @@ Download `AtcSoft.Log.Viewer.Installer.msi` from the [latest release](https://gi
 
 * 📁 It installs to `C:\Program Files\AtcSoft\Log Viewer`, with a Start menu and a desktop shortcut. It needs admin rights.
 * 🧩 It needs the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) (x64).
+* 🔒 The MSI isn't signed yet, so Windows may warn about an unknown publisher. To check the download, compare `(Get-FileHash .\AtcSoft.Log.Viewer.Installer.msi).Hash` in PowerShell with `AtcSoft.Log.Viewer.Installer.msi.sha256` from the same release.
 * ⬆️ A newer MSI upgrades the installed version. Your profiles and settings are kept: they live in your user folder, see [where the app keeps its data](#-where-the-app-keeps-its-data).
 
 ## ✨ Features
