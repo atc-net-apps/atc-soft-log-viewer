@@ -101,6 +101,37 @@ public sealed class FolderMonitoringTests : IDisposable
     }
 
     [Fact]
+    public async Task EntriesWithTheSameTimeStamp_KeepTheirLineOrder()
+    {
+        // Arrange - a burst where many entries get the same time stamp
+        var timeStamp = DateTime.Now;
+        var messages = Enumerable.Range(1, 50).Select(i => $"burst {i:00}").ToArray();
+        await File.WriteAllLinesAsync(
+            Path.Combine(directory.FullName, "app.log"),
+            messages.Select(m => Line(m, timeStamp)),
+            CancellationToken);
+
+        // Act
+        await StartWatching();
+        var refiltered = sut.ApplyFilter(new LogFilter(
+            LogLevelTrace: true,
+            LogLevelDebug: true,
+            LogLevelInfo: true,
+            LogLevelWarning: true,
+            LogLevelError: true,
+            LogLevelCritical: true,
+            IncludeText: string.Empty,
+            DateTimeFrom: null,
+            DateTimeTo: null,
+            SourceSystem: string.Empty));
+
+        // Assert
+        received.Select(x => x.MessageFull).Should().Equal(messages);
+        refiltered.Entries.Select(x => x.MessageFull).Should().Equal(messages);
+        sut.GetFilteredLogEntries().Select(x => x.MessageFull).Should().Equal(messages);
+    }
+
+    [Fact]
     public async Task LinesWrittenJustBeforeARoll_AreNotLost()
     {
         // Arrange
@@ -419,7 +450,12 @@ public sealed class FolderMonitoringTests : IDisposable
     }
 
     private static string Line(string message)
-        => $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff zzz} [INF] {message}"; // Serilog's default file layout
+        => Line(message, DateTime.Now);
+
+    private static string Line(
+        string message,
+        DateTime timeStamp)
+        => $"{timeStamp:yyyy-MM-dd HH:mm:ss.fff zzz} [INF] {message}"; // Serilog's default file layout
 
     private static async Task<bool> WaitUntil(Func<bool> condition)
     {

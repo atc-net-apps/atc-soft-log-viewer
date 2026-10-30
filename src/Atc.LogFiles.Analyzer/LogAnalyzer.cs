@@ -182,7 +182,7 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
 
         var entries = snapshot
             .Where(entry => IsMatch(entry, filter))
-            .OrderBy(x => x.TimeStamp)
+            .Order(LogEntryOrder.Instance)
             .ToArray();
 
         return new LogEntryBatch(entries, version);
@@ -216,7 +216,7 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
         var filter = logFilter;
         return snapshot
             .Where(entry => IsMatch(entry, filter))
-            .OrderBy(x => x.TimeStamp)
+            .Order(LogEntryOrder.Instance)
             .ToArray();
     }
 
@@ -562,7 +562,7 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
 
             if (entries.Length > 0 || raiseWhenEmpty)
             {
-                Array.Sort(entries, static (x, y) => x.TimeStamp.CompareTo(y.TimeStamp));
+                Array.Sort(entries, LogEntryOrder.Instance);
                 CollectedEntries?.Invoke(this, new LogEntryBatchEventArgs(new LogEntryBatch(entries, version)));
             }
 
