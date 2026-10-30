@@ -22,7 +22,9 @@ if (!string.Equals(builder.Configuration["StartViewer"], "false", StringComparis
 
     if (builder.Configuration["ViewerDataPath"] is { Length: > 0 } viewerDataPath)
     {
+        // A test run (the UI tests set the data path): don't ask GitHub for a newer version
         viewer.WithEnvironment("ATCSOFT_LOGVIEWER_DATA_PATH", viewerDataPath);
+        viewer.WithEnvironment("ATCSOFT_LOGVIEWER_SKIP_UPDATE_CHECK", "1");
     }
 }
 
