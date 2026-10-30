@@ -553,16 +553,7 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
                 (foreground, background) = highlighting.Brushes[ruleIndex];
             }
 
-            result.Add(new AtcLogEntryEx(
-                logEntry.SourceIdentifier,
-                logEntry.SourceSystem,
-                logEntry.LineNumber,
-                logEntry.TimeStamp,
-                logEntry.LogLevel,
-                logEntry.MessageShort,
-                logEntry.MessageFull,
-                foreground,
-                background));
+            result.Add(new AtcLogEntryEx(logEntry, foreground, background));
         }
 
         return result;

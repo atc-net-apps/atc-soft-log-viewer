@@ -110,7 +110,7 @@ public class ChartTimelineViewModel : ViewModelBase
 
     private void PopulateSeries(TimelineBuckets buckets)
     {
-        var timeline = LogTimeline.Create(logEntries, DateTime.Now, buckets.BucketSize, buckets.BucketCount);
+        var timeline = LogTimeline.Create(logEntries.Select(x => x.Entry), DateTime.Now, buckets.BucketSize, buckets.BucketCount);
 
         var seriesCollection = new List<StackedColumnSeries<long>>();
         foreach (var logLevel in LogLevels)
