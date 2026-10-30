@@ -32,7 +32,8 @@ internal sealed class ViewerRun : IDisposable
         string? logFolder = null,
         LogFileCollectorType collectorType = LogFileCollectorType.None,
         string? workingDirectory = null,
-        string? releaseFile = null)
+        string? releaseFile = null,
+        IReadOnlyDictionary<string, string>? settings = null)
     {
         DataFolder = E2ESettings.NewFolder(name + "-data");
         if (logFolder is not null)
@@ -45,6 +46,11 @@ internal sealed class ViewerRun : IDisposable
             [AppDataPaths.DataPathVariable] = DataFolder,
             ["Application__OpenRecentFileOnStartup"] = "true",
         };
+
+        foreach (var (key, value) in settings ?? new Dictionary<string, string>(StringComparer.Ordinal))
+        {
+            environment[key] = value;
+        }
 
         // Never GitHub: either no check at start, or a release the test wrote
         if (releaseFile is null)

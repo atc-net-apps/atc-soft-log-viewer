@@ -37,6 +37,16 @@ Every check for a crash also fails on a plain Windows message box: the app shows
 
 Each live test opens its folder through a profile with no log format set. The viewer must find the format from the files. Before a fix, opening a folder this way crashed; without that fix, `Follows_Appends_Rolls_Deletes_And_New_Files` fails on the app's "Error" dialog.
 
+## 🖼️ README screenshots
+
+`ReadmeScreenshots` takes the six screenshots in `docs/images` (list, log level and timeline charts, light and dark theme) with sample logs of the last 50 minutes. It runs only when asked, and the window must be visible on the screen:
+
+```powershell
+$env:ATCSOFT_E2E = 1
+$env:ATCSOFT_SCREENSHOTS = 1
+dotnet test --project test/AtcSoft.Log.Viewer.E2E.Tests -c Release --no-build -- --filter-class "*ReadmeScreenshots"
+```
+
 ## 🔒 What they never touch
 
 - 💾 **Your data:** the viewer gets its own data folder (`ATCSOFT_LOGVIEWER_DATA_PATH`), so your profiles and recent files are not read or changed. The copy of data from earlier versions is skipped for such a folder.
