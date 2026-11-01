@@ -1,0 +1,22 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.6.4">
+
+  <!-- Starts the log simulator in the Aspire dashboard. See ../README.md. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- Uses the dashboard and orchestrator from NuGet, so the Aspire CLI is not needed -->
+    <AspireUseCliBundle>false</AspireUseCliBundle>
+    <NoWarn>$(NoWarn);ASPIRE010</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Atc.LogFiles.Simulator\Atc.LogFiles.Simulator.csproj" />
+    <!-- Build the viewer with the AppHost, so F5 starts the latest code. It targets Windows, so it is
+         built only, not referenced, and Program.cs adds it by path. -->
+    <ProjectReference Include="..\..\src\AtcSoft.Log.Viewer.Wpf.App\AtcSoft.Log.Viewer.Wpf.App.csproj"
+                      ReferenceOutputAssembly="false"
+                      SkipGetTargetFrameworkProperties="true"
+                      IsAspireProjectResource="false" />
+  </ItemGroup>
+
+</Project>

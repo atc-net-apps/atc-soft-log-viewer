@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <!-- The UpgradeCode belongs to this app alone and must never change once released:
+       an MSI with the same UpgradeCode removes this one when it is installed. -->
+  <Package
+    Name="AtcSoft Log Viewer"
+    Manufacturer="AtcSoft"
+    Version="$(ProductVersion)"
+    UpgradeCode="223C2F0E-80CD-4CA0-B98A-EA4A76799BBC"
+    Scope="perMachine">
+
+    <MajorUpgrade
+      DowngradeErrorMessage="A newer version of [ProductName] is already installed."
+      AllowSameVersionUpgrades="yes" />
+
+    <MediaTemplate EmbedCab="yes" />
+
+    <Feature Id="ProductFeature" Title="AtcSoft Log Viewer" Level="1">
+      <ComponentGroupRef Id="HarvestedComponents" />
+      <ComponentRef Id="ApplicationShortcut" />
+      <ComponentRef Id="DesktopShortcut" />
+    </Feature>
+
+    <Icon Id="LogViewerIcon" SourceFile="$(HarvestDirectory)\AppIcon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="LogViewerIcon" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/atc-net-apps/atc-soft-log-viewer" />
+
+    <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
+    <ui:WixUI Id="WixUI_InstallDir" />
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+
+  </Package>
+</Wix>

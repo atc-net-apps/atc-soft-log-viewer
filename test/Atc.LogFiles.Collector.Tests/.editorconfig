@@ -1,0 +1,7 @@
+[*.cs]
+
+# log4net, NLog and Serilog share type names (LogManager, ILogger, LogLevel), so their usings stay local to each file
+dotnet_diagnostic.ATC220.severity = none            # Using directive should be moved to GlobalUsings.cs
+
+# Test fixtures implement IAsyncLifetime and have no finalizers
+dotnet_diagnostic.CA1816.severity = none            # Dispose methods should call SuppressFinalize

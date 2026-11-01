@@ -1,0 +1,38 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".github/workflows/build.yml" />
+    <File Path=".github/workflows/release-please.yml" />
+    <File Path="Directory.Build.props" />
+    <File Path="global.json" />
+    <File Path="nuget.config" />
+    <File Path="README.md" />
+    <File Path="release-please-config.json" />
+  </Folder>
+  <Folder Name="/benchmark/">
+    <Project Path="benchmark/Atc.LogFiles.Benchmarks/Atc.LogFiles.Benchmarks.csproj" />
+  </Folder>
+  <Folder Name="/sample/">
+    <File Path="sample/README.md" />
+    <Project Path="sample/Atc.LogFiles.Simulator/Atc.LogFiles.Simulator.csproj" />
+    <Project Path="sample/AtcSoft.Log.Viewer.Sample.AppHost/AtcSoft.Log.Viewer.Sample.AppHost.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Atc.LogFiles.Analyzer/Atc.LogFiles.Analyzer.csproj" />
+    <Project Path="src/Atc.LogFiles.Collector/Atc.LogFiles.Collector.csproj" />
+    <Project Path="src/AtcSoft.Log.Viewer.Wpf.App/AtcSoft.Log.Viewer.Wpf.App.csproj" />
+    <Project Path="src/AtcSoft.Log.Viewer.Wpf/AtcSoft.Log.Viewer.Wpf.csproj" />
+    <Project Path="src/AtcSoft.Log.Viewer/AtcSoft.Log.Viewer.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Atc.LogFiles.Analyzer.Tests/Atc.LogFiles.Analyzer.Tests.csproj" />
+    <Project Path="test/Atc.LogFiles.Collector.Tests/Atc.LogFiles.Collector.Tests.csproj" />
+    <Project Path="test/Atc.LogFiles.SampleGenerator.Tests/Atc.LogFiles.SampleGenerator.Tests.csproj" />
+    <Project Path="test/Atc.LogFiles.Simulator.Tests/Atc.LogFiles.Simulator.Tests.csproj" />
+    <Project Path="test/AtcSoft.Log.Viewer.E2E.Tests/AtcSoft.Log.Viewer.E2E.Tests.csproj" />
+    <Project Path="test/AtcSoft.Log.Viewer.Tests/AtcSoft.Log.Viewer.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tool/">
+    <Project Path="tool/Atc.LogFiles.SampleGenerator/Atc.LogFiles.SampleGenerator.csproj" />
+  </Folder>
+</Solution>

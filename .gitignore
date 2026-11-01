@@ -426,3 +426,22 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+# The sample log files are part of the repo
+!sample-data/*.log
+
+# Test results
+TestResults/
+
+# Test data log files are part of the tests
+!test/**/TestData/*.log
+
+# Big sample log files made by tool/Atc.LogFiles.SampleGenerator
+sample/*.log
+
+# Log files written by sample/Atc.LogFiles.Simulator
+sample/output/
+
+# Local working notes: assessments and issue drafts
+plans/*
+issues/*

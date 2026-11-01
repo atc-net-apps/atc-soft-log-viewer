@@ -1,0 +1,18 @@
+2024-02-16 09:15:01.123 [INF] Application started successfully
+2024-02-16 09:15:02.123 [ERR] Order processing failed for order 42
+System.InvalidOperationException: boom
+   at Contoso.Orders.OrderService.Process()
+
+   at Contoso.Orders.OrderWorker.Execute()
+2024-02-16 09:15:03.123 [WRN] Received payload from upstream system
+{
+  "orderId": 42
+}
+2024-02-16 09:15:04.123 [INF] Short sub line follows this entry
+abc
+2024-02-16 09:15:05.123 [INF] Processing a very long message xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+12345 a line starting with digits
+   an orphan line after it
+2024-02-16 09:15:06.123 [ERR] Last entry with a stack trace attached
+System.Exception: end
+   at Contoso.Orders.Final()
