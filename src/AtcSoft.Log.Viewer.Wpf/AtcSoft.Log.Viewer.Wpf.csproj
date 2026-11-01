@@ -13,12 +13,12 @@
 
   <ItemGroup>
     <PackageReference Include="Atc" Version="4.0.0" />
-    <PackageReference Include="Atc.Wpf" Version="4.2.1" />
-    <PackageReference Include="Atc.Wpf.Components" Version="4.2.1" />
-    <PackageReference Include="Atc.Wpf.Controls" Version="4.2.1" />
-    <PackageReference Include="Atc.Wpf.FontIcons" Version="4.2.1" />
-    <PackageReference Include="Atc.Wpf.Forms" Version="4.2.1" />
-    <PackageReference Include="Atc.Wpf.Theming" Version="4.2.1" />
+    <PackageReference Include="Atc.Wpf" Version="4.3.0" />
+    <PackageReference Include="Atc.Wpf.Components" Version="4.3.0" />
+    <PackageReference Include="Atc.Wpf.Controls" Version="4.3.0" />
+    <PackageReference Include="Atc.Wpf.FontIcons" Version="4.3.0" />
+    <PackageReference Include="Atc.Wpf.Forms" Version="4.3.0" />
+    <PackageReference Include="Atc.Wpf.Theming" Version="4.3.0" />
     <PackageReference Include="Fluent.Ribbon" Version="11.0.2" />
     <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.5" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.14" />
