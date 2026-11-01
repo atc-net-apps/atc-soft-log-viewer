@@ -10,7 +10,7 @@
   -->
   <PropertyGroup Label="Versioning">
     <!-- x-release-please-start-version -->
-    <ProductVersion>1.0.0</ProductVersion>
+    <ProductVersion>1.1.0</ProductVersion>
     <!-- x-release-please-end -->
   </PropertyGroup>
 
