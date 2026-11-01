@@ -299,7 +299,7 @@ public partial class MainWindowViewModel
         => !string.IsNullOrEmpty(FilterText) ||
            FilterDateTimeFrom is not null ||
            FilterDateTimeTo is not null ||
-           !string.IsNullOrEmpty(SelectedSourceSystemKey);
+           SelectedSourceSystemKeys.Count > 0;
 
     private void ClearFilterCommandHandler()
     {
@@ -311,14 +311,15 @@ public partial class MainWindowViewModel
         filterText = string.Empty;
         filterDateTimeFrom = null;
         filterDateTimeTo = null;
-        selectedSourceSystemKey = string.Empty;
+
+        // A new collection, so clearing it doesn't queue a second filter
+        ReplaceSelectedSourceSystemKeys([]);
 
         _ = ApplyFilter();
 
         RaisePropertyChanged(nameof(FilterText));
         RaisePropertyChanged(nameof(FilterDateTimeFrom));
         RaisePropertyChanged(nameof(FilterDateTimeTo));
-        RaisePropertyChanged(nameof(SelectedSourceSystemKey));
     }
 
     private bool CanEditHighlightsCommandHandler()

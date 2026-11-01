@@ -66,7 +66,7 @@ public class AnalyzerBenchmarks
             IncludeText: includeText,
             DateTimeFrom: null,
             DateTimeTo: null,
-            SourceSystem: string.Empty);
+            SourceSystems: new HashSet<string>(StringComparer.Ordinal));
 
     [IterationCleanup]
     public void IterationCleanup()
@@ -113,7 +113,7 @@ public class AnalyzerBenchmarks
                 IncludeText: "order 19",
                 DateTimeFrom: null,
                 DateTimeTo: null,
-                SourceSystem: string.Empty));
+                SourceSystems: new HashSet<string>(StringComparer.Ordinal)));
 
         return analyzer.GetFilteredLogEntries().Length;
     }

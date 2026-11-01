@@ -33,7 +33,8 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
     private string filterText = string.Empty;
     private DateTime? filterDateTimeFrom;
     private DateTime? filterDateTimeTo;
-    private string selectedSourceSystemKey = string.Empty;
+    private ObservableCollection<string> selectedSourceSystemKeys = [];
+    private bool isSourceSystemFilterQueued;
 
     public MainWindowViewModel(
         ILogger<MainWindowViewModel> logger,
@@ -70,6 +71,7 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
             .ApplyFilter(CreateLogFilter())
             .FilterVersion;
 
+        selectedSourceSystemKeys.CollectionChanged += OnSelectedSourceSystemKeysChanged;
         this.logAnalyzer.CollectedEntries += OnCollectedEntries;
         this.logAnalyzer.NotReadChanged += OnNotReadChanged;
 
@@ -149,14 +151,24 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
 
     public IDictionary<string, string> SourceSystems { get; private set; } = new Dictionary<string, string>(StringComparer.Ordinal);
 
-    public string SelectedSourceSystemKey
+    /// <summary>
+    /// The source systems to show; none ticked shows every source system.
+    /// </summary>
+    public ObservableCollection<string> SelectedSourceSystemKeys
     {
-        get => selectedSourceSystemKey;
+        get => selectedSourceSystemKeys;
         set
         {
-            selectedSourceSystemKey = value;
+            if (ReferenceEquals(value, selectedSourceSystemKeys))
+            {
+                return;
+            }
+
+            selectedSourceSystemKeys.CollectionChanged -= OnSelectedSourceSystemKeysChanged;
+            selectedSourceSystemKeys = value ?? [];
+            selectedSourceSystemKeys.CollectionChanged += OnSelectedSourceSystemKeysChanged;
             RaisePropertyChanged();
-            _ = ApplyFilter();
+            QueueSourceSystemFilter();
         }
     }
 
@@ -476,8 +488,61 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
             return;
         }
 
+        var allWereTicked = SelectedSourceSystemKeys.Count > 0 &&
+                            SourceSystems.Keys.All(SelectedSourceSystemKeys.Contains);
+
         SourceSystems = sourceSystems;
         RaisePropertyChanged(nameof(SourceSystems));
+
+        if (allWereTicked)
+        {
+            // Every system was ticked, so a new one shows (see LogFilter.SourceSystemsToShow); tick it too
+            foreach (var key in sourceSystems.Keys.Where(x => !SelectedSourceSystemKeys.Contains(x)))
+            {
+                SelectedSourceSystemKeys.Add(key);
+            }
+        }
+    }
+
+    private void ReplaceSelectedSourceSystemKeys(
+        ObservableCollection<string> keys)
+    {
+        selectedSourceSystemKeys.CollectionChanged -= OnSelectedSourceSystemKeysChanged;
+        selectedSourceSystemKeys = keys;
+        selectedSourceSystemKeys.CollectionChanged += OnSelectedSourceSystemKeysChanged;
+        RaisePropertyChanged(nameof(SelectedSourceSystemKeys));
+    }
+
+    private void OnSelectedSourceSystemKeysChanged(
+        object? sender,
+        NotifyCollectionChangedEventArgs e)
+        => QueueSourceSystemFilter();
+
+    /// <summary>
+    /// The drop-down changes the ticked keys in place, one change per key, so Select all would
+    /// filter once per key; the filter is applied once, after the last change.
+    /// </summary>
+    private void QueueSourceSystemFilter()
+    {
+        var dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher is null)
+        {
+            return;
+        }
+
+        if (isSourceSystemFilterQueued)
+        {
+            return;
+        }
+
+        isSourceSystemFilterQueued = true;
+        dispatcher.BeginInvoke(
+            DispatcherPriority.Background,
+            () =>
+            {
+                isSourceSystemFilterQueued = false;
+                _ = ApplyFilter();
+            });
     }
 
     private LogFilter CreateLogFilter()
@@ -491,7 +556,7 @@ public partial class MainWindowViewModel : MainWindowViewModelBase
             FilterText,
             FilterDateTimeFrom,
             FilterDateTimeTo,
-            SelectedSourceSystemKey);
+            LogFilter.SourceSystemsToShow(SelectedSourceSystemKeys, SourceSystems.Keys));
 
     private async Task ApplyFilter()
     {

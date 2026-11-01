@@ -123,11 +123,29 @@ public sealed class LogAnalyzerTests : IDisposable
     }
 
     [Fact]
+    public void GetFilteredLogEntries_MatchesAnyOfTheSelectedSourceSystems()
+    {
+        // Arrange
+        RaiseDefaultEntries();
+        RaiseEntry(CreateEntry(7, LogLevel.Information, "Cleanup started", sourceSystem: "Scheduler"));
+        sut.SetFilter(CreateFilter() with { SourceSystems = SourceSystemSet("Worker", "Scheduler") });
+
+        // Act
+        var actual = sut.GetFilteredLogEntries();
+
+        // Assert
+        actual
+            .Select(x => x.SourceSystem)
+            .Should()
+            .Equal("Worker", "Scheduler");
+    }
+
+    [Fact]
     public void GetFilteredLogEntries_MatchesSourceSystem()
     {
         // Arrange
         RaiseDefaultEntries();
-        sut.SetFilter(CreateFilter() with { SourceSystem = "Worker" });
+        sut.SetFilter(CreateFilter() with { SourceSystems = SourceSystemSet("Worker") });
 
         // Act
         var actual = sut.GetFilteredLogEntries();
@@ -140,7 +158,7 @@ public sealed class LogAnalyzerTests : IDisposable
     }
 
     [Fact]
-    public void GetSourceSystems_ReturnsBlankFirstItemAndDistinctSystems()
+    public void GetSourceSystems_ReturnsTheDistinctSystemsSortedWithoutABlankItem()
     {
         // Arrange
         RaiseDefaultEntries();
@@ -149,8 +167,7 @@ public sealed class LogAnalyzerTests : IDisposable
         var actual = sut.GetSourceSystems();
 
         // Assert
-        actual.Keys.First().Should().BeEmpty();
-        actual.Keys.Should().BeEquivalentTo(string.Empty, "Api", "Worker");
+        actual.Keys.Should().Equal("Api", "Worker");
     }
 
     [Fact]
@@ -411,7 +428,11 @@ public sealed class LogAnalyzerTests : IDisposable
             IncludeText: string.Empty,
             DateTimeFrom: null,
             DateTimeTo: null,
-            SourceSystem: string.Empty);
+            SourceSystems: SourceSystemSet());
+
+    private static HashSet<string> SourceSystemSet(
+        params string[] sourceSystems)
+        => new(sourceSystems, StringComparer.Ordinal);
 
     private static AtcLogEntry CreateEntry(
         int secondsOffset,

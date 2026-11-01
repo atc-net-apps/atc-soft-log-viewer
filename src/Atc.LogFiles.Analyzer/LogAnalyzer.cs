@@ -64,7 +64,7 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
             IncludeText: string.Empty,
             DateTimeFrom: null,
             DateTimeTo: null,
-            SourceSystem: string.Empty);
+            SourceSystems: new HashSet<string>(StringComparer.Ordinal));
 
         flushTimer = new Timer(_ => NotifyAndClearBuffer(raiseWhenEmpty: false));
 
@@ -208,7 +208,6 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
         }
 
         systems.Sort(StringComparer.Ordinal);
-        systems = DropDownFirstItemTypeHelper.EnsureFirstItemType(systems, DropDownFirstItemType.Blank);
 
         return systems.ToDictionary(
             x => x,
@@ -328,8 +327,8 @@ public sealed class LogAnalyzer : ILogAnalyzer, IDisposable
            (!filter.DateTimeTo.HasValue || entry.TimeStamp <= filter.DateTimeTo.Value) &&
            (filter.IncludeText.Length == 0 ||
             entry.MessageFull.Contains(filter.IncludeText, StringComparison.OrdinalIgnoreCase)) &&
-           (filter.SourceSystem.Length == 0 ||
-            entry.SourceSystem.Equals(filter.SourceSystem, StringComparison.Ordinal));
+           (filter.SourceSystems.Count == 0 ||
+            filter.SourceSystems.Contains(entry.SourceSystem));
 
     private static bool IsLogLevelEnabled(
         LogLevel logLevel,

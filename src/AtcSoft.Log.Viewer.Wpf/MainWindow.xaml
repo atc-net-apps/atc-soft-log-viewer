@@ -204,13 +204,16 @@
                                             LabelWidthSizeDefinition="Pixel"
                                             SelectedDate="{Binding Path=FilterDateTimeTo, Mode=TwoWay}" />
                                     </atc:UniformSpacingPanel>
-                                    <atc:LabelComboBox
+                                    <atc:LabelMultiSelectComboBox
                                         Width="300"
+                                        AutomationProperties.AutomationId="SourceSystemsFilter"
+                                        CommitMode="Deferred"
                                         HideAreas="All"
                                         Items="{Binding Path=SourceSystems}"
-                                        LabelText="SourceSystem"
+                                        LabelText="Source systems"
+                                        NoneText="All"
                                         Orientation="Vertical"
-                                        SelectedKey="{Binding Path=SelectedSourceSystemKey}" />
+                                        SelectedKeys="{Binding Path=SelectedSourceSystemKeys}" />
                                     <fluent:Button
                                         Command="{Binding Path=ClearFilterCommand}"
                                         Header="Clear"

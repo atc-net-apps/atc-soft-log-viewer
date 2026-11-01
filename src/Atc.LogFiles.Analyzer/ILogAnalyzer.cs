@@ -41,6 +41,10 @@ public interface ILogAnalyzer
     /// <returns>The matching entries and the new filter version.</returns>
     LogEntryBatch ApplyFilter(LogFilter filter);
 
+    /// <summary>
+    /// Gets the source systems read so far, sorted, as key and display value.
+    /// </summary>
+    /// <returns>The source systems.</returns>
     public IDictionary<string, string> GetSourceSystems();
 
     /// <summary>

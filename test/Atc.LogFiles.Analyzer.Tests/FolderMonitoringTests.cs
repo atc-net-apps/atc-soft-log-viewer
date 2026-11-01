@@ -207,7 +207,7 @@ public sealed class FolderMonitoringTests : IDisposable
             IncludeText: string.Empty,
             DateTimeFrom: null,
             DateTimeTo: null,
-            SourceSystem: string.Empty));
+            SourceSystems: new HashSet<string>(StringComparer.Ordinal)));
 
         // Assert
         received.Select(x => x.MessageFull).Should().Equal(messages);
